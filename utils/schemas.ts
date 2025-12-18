@@ -1,5 +1,6 @@
 import * as z from 'zod';
 import { ZodSchema } from 'zod';
+import { ValidationError } from './errors';
 
 export const profileSchema = z.object({
   // firstName: z.string().max(5, { message: 'max length is 5' }),
@@ -22,7 +23,8 @@ export function validateWithZodSchema<T>(
 
   if (!result.success) {
     const errors = result.error.errors.map((error) => error.message);
-    throw new Error(errors.join(','));
+    // 使用ValidationError而不是普通Error，保持错误处理一致性
+    throw new ValidationError(errors.join(', '));
   }
   return result.data;
 }

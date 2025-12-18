@@ -1,68 +1,110 @@
 import Stripe from 'stripe';
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
-import { type NextRequest, type NextResponse } from 'next/server';
+
+// 环境变量验证
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+if (!stripeSecretKey) {
+  throw new Error('STRIPE_SECRET_KEY environment variable is not set');
+}
+
+const stripe = new Stripe(stripeSecretKey);
+import { type NextRequest } from 'next/server';
 import db from '@/utils/db';
 import { formatDate } from '@/utils/format';
+import {
+  NotFoundError,
+  PaymentError,
+  ExternalServiceError,
+  handleApiError,
+  ensureExists,
+} from '@/utils/errors';
 
-export const POST = async (req: NextRequest, res: NextResponse) => {
-  const requestHeaders = new Headers(req.headers);
-  const origin = requestHeaders.get('origin');
-  const { bookingId } = await req.json();
-
-  const booking = await db.booking.findUnique({
-    where: { id: bookingId },
-    include: {
-      property: {
-        select: {
-          name: true,
-          image: true,
-        },
-      },
-    },
-  });
-  if (!booking) {
-    return Response.json(null, {
-      status: 404,
-      statusText: 'Not Found',
-    });
-  }
-  const {
-    totalNights,
-    orderTotal,
-    checkIn,
-    checkOut,
-    property: { image, name },
-  } = booking;
-
+export const POST = async (req: NextRequest) => {
   try {
-    const session = await stripe.checkout.sessions.create({
-      ui_mode: 'embedded',
-      metadata: { bookingId: booking.id },
-      line_items: [
-        {
-          quantity: 1,
-          price_data: {
-            currency: 'usd',
-            product_data: {
-              name: `${name}`,
-              images: [image],
-              description: `Stay in this wonderful place for ${totalNights} nights, from ${formatDate(
-                checkIn
-              )} to ${formatDate(checkOut)}. Enjoy your stay!`,
-            },
-            unit_amount: orderTotal * 100,
+    const requestHeaders = new Headers(req.headers);
+    const origin = requestHeaders.get('origin');
+    
+    if (!origin) {
+      return handleApiError(new Error('Origin header is required'));
+    }
+
+    const { bookingId } = await req.json();
+
+    if (!bookingId) {
+      return handleApiError(new Error('Booking ID is required'));
+    }
+
+    const booking = await db.booking.findUnique({
+      where: { id: bookingId },
+      include: {
+        property: {
+          select: {
+            name: true,
+            image: true,
           },
         },
-      ],
-      mode: 'payment',
-      return_url: `${origin}/api/confirm?session_id={CHECKOUT_SESSION_ID}`,
+      },
     });
+
+    const existingBooking = ensureExists(booking, 'Booking');
+
+    // 检查预订是否已支付
+    if (existingBooking.paymentStatus) {
+      return handleApiError(
+        new PaymentError('This booking has already been paid')
+      );
+    }
+
+    const {
+      totalNights,
+      orderTotal,
+      checkIn,
+      checkOut,
+      property: { image, name },
+    } = existingBooking;
+
+    // 验证订单总额
+    if (orderTotal <= 0) {
+      return handleApiError(new PaymentError('Invalid order total'));
+    }
+
+    let session: Stripe.Checkout.Session;
+    try {
+      session = await stripe.checkout.sessions.create({
+        ui_mode: 'embedded',
+        metadata: { bookingId: existingBooking.id },
+        line_items: [
+          {
+            quantity: 1,
+            price_data: {
+              currency: 'usd',
+              product_data: {
+                name: `${name}`,
+                images: [image],
+                description: `Stay in this wonderful place for ${totalNights} nights, from ${formatDate(
+                  checkIn
+                )} to ${formatDate(checkOut)}. Enjoy your stay!`,
+              },
+              unit_amount: orderTotal * 100,
+            },
+          },
+        ],
+        mode: 'payment',
+        return_url: `${origin}/api/confirm?session_id={CHECKOUT_SESSION_ID}`,
+      });
+    } catch (error) {
+      throw new ExternalServiceError(
+        'Stripe',
+        'Failed to create checkout session',
+        { error, bookingId }
+      );
+    }
+
+    if (!session.client_secret) {
+      throw new PaymentError('Failed to get payment client secret');
+    }
+
     return Response.json({ clientSecret: session.client_secret });
   } catch (error) {
-    console.log(error);
-    return Response.json(null, {
-      status: 500,
-      statusText: 'Internal Server Error',
-    });
+    return handleApiError(error, 'Failed to process payment');
   }
 };

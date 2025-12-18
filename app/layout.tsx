@@ -4,11 +4,14 @@ import './globals.css'
 import Navbar from '@/components/navbar/Navbar'
 import Providers from './providers'
 import { ClerkProvider } from '@clerk/nextjs'
+import ErrorBoundary from '@/components/ErrorBoundary'
+
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'HomeAway',
-  description: 'Feel at home, away from home.',
+  title: 'HomeAway - 短租预订平台',
+  description: 'Feel at home, away from home. 现代化的短租预订平台，展示全栈开发能力。',
+  keywords: ['短租', '预订', 'Next.js', '全栈开发'],
 }
 
 export default function RootLayout({
@@ -18,12 +21,14 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="en" suppressHydrationWarning>
+      <html lang="zh-CN" suppressHydrationWarning>
         <body className={inter.className}>
-          <Providers>
-            <Navbar />
-            <main className="container py-10">{children}</main>
-          </Providers>
+          <ErrorBoundary>
+            <Providers>
+              <Navbar />
+              <main className="container py-10">{children}</main>
+            </Providers>
+          </ErrorBoundary>
         </body>
       </html>
     </ClerkProvider>

@@ -9,31 +9,47 @@ import {
 } from './schemas';
 import db from './db';
 import { auth, clerkClient, currentUser } from '@clerk/nextjs/server';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { uploadImage } from './supabase';
 import { calculateTotals } from './calculateTotals';
 import { formatDate } from './format';
+import {
+  AuthenticationError,
+  NotFoundError,
+  ValidationError,
+  ConflictError,
+  DatabaseError,
+  ExternalServiceError,
+  handleServerActionError,
+  ensureExists,
+} from './errors';
+
+// 获取认证用户（使用新的错误类）
 const getAuthUser = async () => {
   const user = await currentUser();
   if (!user) {
-    throw new Error('You must be logged in to access this route');
+    throw new AuthenticationError();
   }
-  if (!user.privateMetadata.hasProfile) redirect('/profile/create');
+  if (!user.privateMetadata.hasProfile) {
+    redirect('/profile/create');
+  }
   return user;
 };
 
+// 获取管理员用户
 const getAdminUser = async () => {
   const user = await getAuthUser();
-  if (user.id !== process.env.ADMIN_USER_ID) redirect('/');
+  const adminUserId = process.env.ADMIN_USER_ID;
+  
+  if (!adminUserId) {
+    throw new Error('ADMIN_USER_ID environment variable is not set');
+  }
+  
+  if (user.id !== adminUserId) {
+    redirect('/');
+  }
   return user;
-};
-
-const renderError = (error: unknown): { message: string } => {
-  console.log(error);
-  return {
-    message: error instanceof Error ? error.message : 'An error occurred',
-  };
 };
 
 export const createProfileAction = async (
@@ -42,10 +58,20 @@ export const createProfileAction = async (
 ) => {
   try {
     const user = await currentUser();
-    if (!user) throw new Error('Please login to create a profile');
+    if (!user) {
+      throw new AuthenticationError('Please login to create a profile');
+    }
 
     const rawData = Object.fromEntries(formData);
     const validatedFields = validateWithZodSchema(profileSchema, rawData);
+
+    // 检查用户名是否已存在
+    const existingProfile = await db.profile.findFirst({
+      where: { username: validatedFields.username },
+    });
+    if (existingProfile) {
+      throw new ConflictError('Username already exists');
+    }
 
     await db.profile.create({
       data: {
@@ -55,13 +81,14 @@ export const createProfileAction = async (
         ...validatedFields,
       },
     });
+    
     await clerkClient.users.updateUserMetadata(user.id, {
       privateMetadata: {
         hasProfile: true,
       },
     });
   } catch (error) {
-    return renderError(error);
+    return handleServerActionError(error);
   }
   redirect('/');
 };
@@ -103,17 +130,34 @@ export const updateProfileAction = async (
     const rawData = Object.fromEntries(formData);
     const validatedFields = validateWithZodSchema(profileSchema, rawData);
 
-    await db.profile.update({
+    // 检查用户名冲突（排除当前用户）
+    if (validatedFields.username) {
+      const existingProfile = await db.profile.findFirst({
+        where: {
+          username: validatedFields.username,
+          clerkId: { not: user.id },
+        },
+      });
+      if (existingProfile) {
+        throw new ConflictError('Username already exists');
+      }
+    }
+
+    const profile = await db.profile.update({
       where: {
         clerkId: user.id,
       },
       data: validatedFields,
     });
 
+    if (!profile) {
+      throw new NotFoundError('Profile');
+    }
+
     revalidatePath('/profile');
     return { message: 'Profile updated successfully' };
   } catch (error) {
-    return renderError(error);
+    return handleServerActionError(error);
   }
 };
 
@@ -124,10 +168,20 @@ export const updateProfileImageAction = async (
   const user = await getAuthUser();
   try {
     const image = formData.get('image') as File;
+    if (!image) {
+      throw new ValidationError('Image is required', 'image');
+    }
+    
     const validatedFields = validateWithZodSchema(imageSchema, { image });
-    const fullPath = await uploadImage(validatedFields.image);
+    let fullPath: string;
+    
+    try {
+      fullPath = await uploadImage(validatedFields.image);
+    } catch (error) {
+      throw new ExternalServiceError('Supabase', 'Failed to upload image', { error });
+    }
 
-    await db.profile.update({
+    const profile = await db.profile.update({
       where: {
         clerkId: user.id,
       },
@@ -135,10 +189,15 @@ export const updateProfileImageAction = async (
         profileImage: fullPath,
       },
     });
+
+    if (!profile) {
+      throw new NotFoundError('Profile');
+    }
+
     revalidatePath('/profile');
     return { message: 'Profile image updated successfully' };
   } catch (error) {
-    return renderError(error);
+    return handleServerActionError(error);
   }
 };
 
@@ -150,21 +209,36 @@ export const createPropertyAction = async (
   try {
     const rawData = Object.fromEntries(formData);
     const file = formData.get('image') as File;
-    console.log(rawData);
+    
+    if (!file) {
+      throw new ValidationError('Property image is required', 'image');
+    }
 
     const validatedFields = validateWithZodSchema(propertySchema, rawData);
     const validatedFile = validateWithZodSchema(imageSchema, { image: file });
-    const fullPath = await uploadImage(validatedFile.image);
+    
+    let fullPath: string;
+    try {
+      fullPath = await uploadImage(validatedFile.image);
+    } catch (error) {
+      throw new ExternalServiceError('Supabase', 'Failed to upload property image', { error });
+    }
 
-    await db.property.create({
-      data: {
-        ...validatedFields,
-        image: fullPath,
-        profileId: user.id,
-      },
-    });
+    try {
+      await db.property.create({
+        data: {
+          ...validatedFields,
+          image: fullPath,
+          profileId: user.id,
+        },
+      });
+      // 清除房源列表缓存
+      revalidateTag('properties');
+    } catch (error) {
+      throw new DatabaseError('Failed to create property', { error, validatedFields });
+    }
   } catch (error) {
-    return renderError(error);
+    return handleServerActionError(error);
   }
   redirect('/');
 };
@@ -176,27 +250,42 @@ export const fetchProperties = async ({
   search?: string;
   category?: string;
 }) => {
-  const properties = await db.property.findMany({
-    where: {
-      category,
-      OR: [
-        { name: { contains: search, mode: 'insensitive' } },
-        { tagline: { contains: search, mode: 'insensitive' } },
-      ],
+  // 使用缓存优化频繁查询（缓存5分钟）
+  const getCachedProperties = unstable_cache(
+    async (searchParam: string, categoryParam?: string) => {
+      return db.property.findMany({
+        where: {
+          ...(categoryParam && { category: categoryParam }),
+          ...(searchParam && {
+            OR: [
+              { name: { contains: searchParam, mode: 'insensitive' } },
+              { tagline: { contains: searchParam, mode: 'insensitive' } },
+            ],
+          }),
+        },
+        select: {
+          id: true,
+          name: true,
+          tagline: true,
+          country: true,
+          price: true,
+          image: true,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        // 限制结果数量，避免返回过多数据
+        take: 100,
+      });
     },
-    select: {
-      id: true,
-      name: true,
-      tagline: true,
-      country: true,
-      price: true,
-      image: true,
-    },
-    orderBy: {
-      createdAt: 'desc',
-    },
-  });
-  return properties;
+    ['properties'],
+    {
+      revalidate: 300, // 5分钟缓存
+      tags: ['properties'],
+    }
+  );
+
+  return getCachedProperties(search, category);
 };
 
 export const fetchFavoriteId = async ({
@@ -224,7 +313,15 @@ export const toggleFavoriteAction = async (prevState: {
 }) => {
   const user = await getAuthUser();
   const { propertyId, favoriteId, pathname } = prevState;
+  
   try {
+    // 验证房源存在
+    const property = await db.property.findUnique({
+      where: { id: propertyId },
+      select: { id: true },
+    });
+    ensureExists(property, 'Property');
+
     if (favoriteId) {
       await db.favorite.delete({
         where: {
@@ -232,17 +329,26 @@ export const toggleFavoriteAction = async (prevState: {
         },
       });
     } else {
-      await db.favorite.create({
-        data: {
+      // 检查是否已收藏
+      const existing = await db.favorite.findFirst({
+        where: {
           propertyId,
           profileId: user.id,
         },
       });
+      if (!existing) {
+        await db.favorite.create({
+          data: {
+            propertyId,
+            profileId: user.id,
+          },
+        });
+      }
     }
     revalidatePath(pathname);
     return { message: favoriteId ? 'Removed from Faves' : 'Added to Faves' };
   } catch (error) {
-    return renderError(error);
+    return handleServerActionError(error);
   }
 };
 
@@ -269,28 +375,68 @@ export const fetchFavorites = async () => {
 };
 
 export const fetchPropertyDetails = (id: string) => {
-  return db.property.findUnique({
-    where: {
-      id,
-    },
-    include: {
-      profile: true,
-      bookings: {
-        select: {
-          checkIn: true,
-          checkOut: true,
+  // 使用缓存优化房源详情查询（缓存10分钟）
+  const getCachedPropertyDetails = unstable_cache(
+    async (propertyId: string) => {
+      return db.property.findUnique({
+        where: {
+          id: propertyId,
         },
-      },
+        include: {
+          profile: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              profileImage: true,
+              clerkId: true,
+            },
+          },
+          bookings: {
+            select: {
+              checkIn: true,
+              checkOut: true,
+            },
+            where: {
+              paymentStatus: true, // 只获取已支付的预订
+            },
+          },
+        },
+      });
     },
-  });
+    ['property-details'],
+    {
+      revalidate: 600, // 10分钟缓存
+      tags: ['property-details', `property-${id}`],
+    }
+  );
+
+  return getCachedPropertyDetails(id);
 };
 
 export async function createReviewAction(prevState: any, formData: FormData) {
   const user = await getAuthUser();
   try {
     const rawData = Object.fromEntries(formData);
-
     const validatedFields = validateWithZodSchema(createReviewSchema, rawData);
+
+    // 验证房源存在
+    const property = await db.property.findUnique({
+      where: { id: validatedFields.propertyId },
+      select: { id: true },
+    });
+    ensureExists(property, 'Property');
+
+    // 检查是否已评价
+    const existingReview = await db.review.findFirst({
+      where: {
+        propertyId: validatedFields.propertyId,
+        profileId: user.id,
+      },
+    });
+    if (existingReview) {
+      throw new ConflictError('You have already reviewed this property');
+    }
 
     await db.review.create({
       data: {
@@ -298,34 +444,52 @@ export async function createReviewAction(prevState: any, formData: FormData) {
         profileId: user.id,
       },
     });
+    // 清除相关缓存
     revalidatePath(`/properties/${validatedFields.propertyId}`);
+    revalidateTag('property-reviews');
+    revalidateTag('property-rating');
+    revalidateTag(`property-${validatedFields.propertyId}`);
     return { message: 'Review submitted successfully' };
   } catch (error) {
-    return renderError(error);
+    return handleServerActionError(error);
   }
 }
 
 export async function fetchPropertyReviews(propertyId: string) {
-  const reviews = await db.review.findMany({
-    where: {
-      propertyId,
-    },
-    select: {
-      id: true,
-      rating: true,
-      comment: true,
-      profile: {
-        select: {
-          firstName: true,
-          profileImage: true,
+  // 使用缓存优化评价查询（缓存10分钟）
+  const getCachedReviews = unstable_cache(
+    async (id: string) => {
+      return db.review.findMany({
+        where: {
+          propertyId: id,
         },
-      },
+        select: {
+          id: true,
+          rating: true,
+          comment: true,
+          createdAt: true,
+          profile: {
+            select: {
+              firstName: true,
+              profileImage: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        // 限制返回数量，避免加载过多评价
+        take: 50,
+      });
     },
-    orderBy: {
-      createdAt: 'desc',
-    },
-  });
-  return reviews;
+    ['property-reviews'],
+    {
+      revalidate: 600, // 10分钟缓存
+      tags: ['property-reviews', `property-${propertyId}`],
+    }
+  );
+
+  return getCachedReviews(propertyId);
 }
 
 export const fetchPropertyReviewsByUser = async () => {
@@ -354,6 +518,15 @@ export const deleteReviewAction = async (prevState: { reviewId: string }) => {
   const user = await getAuthUser();
 
   try {
+    // 验证评价存在且属于当前用户
+    const review = await db.review.findFirst({
+      where: {
+        id: reviewId,
+        profileId: user.id,
+      },
+    });
+    ensureExists(review, 'Review');
+
     await db.review.delete({
       where: {
         id: reviewId,
@@ -364,7 +537,7 @@ export const deleteReviewAction = async (prevState: { reviewId: string }) => {
     revalidatePath('/reviews');
     return { message: 'Review deleted successfully' };
   } catch (error) {
-    return renderError(error);
+    return handleServerActionError(error);
   }
 };
 
@@ -381,24 +554,36 @@ export const findExistingReview = async (
 };
 
 export async function fetchPropertyRating(propertyId: string) {
-  const result = await db.review.groupBy({
-    by: ['propertyId'],
-    _avg: {
-      rating: true,
-    },
-    _count: {
-      rating: true,
-    },
-    where: {
-      propertyId,
-    },
-  });
+  // 使用缓存优化评分查询（缓存15分钟）
+  const getCachedRating = unstable_cache(
+    async (id: string) => {
+      const result = await db.review.groupBy({
+        by: ['propertyId'],
+        _avg: {
+          rating: true,
+        },
+        _count: {
+          rating: true,
+        },
+        where: {
+          propertyId: id,
+        },
+      });
 
-  // empty array if no reviews
-  return {
-    rating: result[0]?._avg.rating?.toFixed(1) ?? 0,
-    count: result[0]?._count.rating ?? 0,
-  };
+      // empty array if no reviews
+      return {
+        rating: result[0]?._avg.rating?.toFixed(1) ?? 0,
+        count: result[0]?._count.rating ?? 0,
+      };
+    },
+    ['property-rating'],
+    {
+      revalidate: 900, // 15分钟缓存
+      tags: ['property-rating', `property-${propertyId}`],
+    }
+  );
+
+  return getCachedRating(propertyId);
 }
 
 export const createBookingAction = async (prevState: {
@@ -407,29 +592,68 @@ export const createBookingAction = async (prevState: {
   checkOut: Date;
 }) => {
   const user = await getAuthUser();
-  await db.booking.deleteMany({
-    where: {
-      profileId: user.id,
-      paymentStatus: false,
-    },
-  });
-  let bookingId: null | string = null;
-
-  const { propertyId, checkIn, checkOut } = prevState;
-  const property = await db.property.findUnique({
-    where: { id: propertyId },
-    select: { price: true },
-  });
-  if (!property) {
-    return { message: 'Property not found' };
-  }
-  const { orderTotal, totalNights } = calculateTotals({
-    checkIn,
-    checkOut,
-    price: property.price,
-  });
-
+  
   try {
+    // 清理未支付的旧预订
+    await db.booking.deleteMany({
+      where: {
+        profileId: user.id,
+        paymentStatus: false,
+      },
+    });
+
+    const { propertyId, checkIn, checkOut } = prevState;
+    
+    // 验证日期范围
+    if (checkOut <= checkIn) {
+      throw new ValidationError('Check-out date must be after check-in date', 'dateRange');
+    }
+
+    // 验证房源存在
+    const property = await db.property.findUnique({
+      where: { id: propertyId },
+      select: { price: true },
+    });
+    const existingProperty = ensureExists(property, 'Property');
+
+    // 检查日期冲突
+    const conflictingBooking = await db.booking.findFirst({
+      where: {
+        propertyId,
+        paymentStatus: true,
+        OR: [
+          {
+            AND: [
+              { checkIn: { lte: checkIn } },
+              { checkOut: { gt: checkIn } },
+            ],
+          },
+          {
+            AND: [
+              { checkIn: { lt: checkOut } },
+              { checkOut: { gte: checkOut } },
+            ],
+          },
+          {
+            AND: [
+              { checkIn: { gte: checkIn } },
+              { checkOut: { lte: checkOut } },
+            ],
+          },
+        ],
+      },
+    });
+
+    if (conflictingBooking) {
+      throw new ConflictError('These dates are already booked');
+    }
+
+    const { orderTotal, totalNights } = calculateTotals({
+      checkIn,
+      checkOut,
+      price: existingProperty.price,
+    });
+
     const booking = await db.booking.create({
       data: {
         checkIn,
@@ -440,11 +664,11 @@ export const createBookingAction = async (prevState: {
         propertyId,
       },
     });
-    bookingId = booking.id;
+
+    redirect(`/checkout?bookingId=${booking.id}`);
   } catch (error) {
-    return renderError(error);
+    return handleServerActionError(error);
   }
-  redirect(`/checkout?bookingId=${bookingId}`);
 };
 
 export const fetchBookings = async () => {
@@ -476,7 +700,16 @@ export async function deleteBookingAction(prevState: { bookingId: string }) {
   const user = await getAuthUser();
 
   try {
-    const result = await db.booking.delete({
+    // 先检查预订是否存在且属于当前用户
+    const booking = await db.booking.findFirst({
+      where: {
+        id: bookingId,
+        profileId: user.id,
+      },
+    });
+    ensureExists(booking, 'Booking');
+
+    await db.booking.delete({
       where: {
         id: bookingId,
         profileId: user.id,
@@ -486,7 +719,7 @@ export async function deleteBookingAction(prevState: { bookingId: string }) {
     revalidatePath('/bookings');
     return { message: 'Booking deleted successfully' };
   } catch (error) {
-    return renderError(error);
+    return handleServerActionError(error);
   }
 }
 
@@ -503,37 +736,53 @@ export const fetchRentals = async () => {
     },
   });
 
-  const rentalsWithBookingSums = await Promise.all(
-    rentals.map(async (rental) => {
-      const totalNightsSum = await db.booking.aggregate({
-        where: {
-          propertyId: rental.id,
-          paymentStatus: true,
-        },
-        _sum: {
-          totalNights: true,
-        },
-      });
+  // 优化：批量查询所有预订数据，避免N+1问题
+  if (rentals.length === 0) {
+    return rentals.map((rental) => ({
+      ...rental,
+      totalNightsSum: 0,
+      orderTotalSum: 0,
+    }));
+  }
 
-      const orderTotalSum = await db.booking.aggregate({
-        where: {
-          propertyId: rental.id,
-          paymentStatus: true,
-        },
-        _sum: {
-          orderTotal: true,
-        },
-      });
+  const propertyIds = rentals.map((rental) => rental.id);
 
-      return {
-        ...rental,
-        totalNightsSum: totalNightsSum._sum.totalNights,
-        orderTotalSum: orderTotalSum._sum.orderTotal,
-      };
-    })
+  // 一次性获取所有预订的聚合数据
+  const bookingsAggregate = await db.booking.groupBy({
+    by: ['propertyId'],
+    where: {
+      propertyId: { in: propertyIds },
+      paymentStatus: true,
+    },
+    _sum: {
+      totalNights: true,
+      orderTotal: true,
+    },
+  });
+
+  // 创建映射以便快速查找
+  const aggregateMap = new Map(
+    bookingsAggregate.map((item) => [
+      item.propertyId,
+      {
+        totalNights: item._sum.totalNights ?? 0,
+        orderTotal: item._sum.orderTotal ?? 0,
+      },
+    ])
   );
 
-  return rentalsWithBookingSums;
+  // 合并数据
+  return rentals.map((rental) => {
+    const aggregate = aggregateMap.get(rental.id) || {
+      totalNights: 0,
+      orderTotal: 0,
+    };
+    return {
+      ...rental,
+      totalNightsSum: aggregate.totalNights,
+      orderTotalSum: aggregate.orderTotal,
+    };
+  });
 };
 
 export async function deleteRentalAction(prevState: { propertyId: string }) {
@@ -541,6 +790,15 @@ export async function deleteRentalAction(prevState: { propertyId: string }) {
   const user = await getAuthUser();
 
   try {
+    // 验证房源存在且属于当前用户
+    const property = await db.property.findFirst({
+      where: {
+        id: propertyId,
+        profileId: user.id,
+      },
+    });
+    ensureExists(property, 'Property');
+
     await db.property.delete({
       where: {
         id: propertyId,
@@ -551,7 +809,7 @@ export async function deleteRentalAction(prevState: { propertyId: string }) {
     revalidatePath('/rentals');
     return { message: 'Rental deleted successfully' };
   } catch (error) {
-    return renderError(error);
+    return handleServerActionError(error);
   }
 }
 
@@ -574,8 +832,22 @@ export const updatePropertyAction = async (
   const propertyId = formData.get('id') as string;
 
   try {
+    if (!propertyId) {
+      throw new ValidationError('Property ID is required', 'id');
+    }
+
+    // 验证房源存在且属于当前用户
+    const property = await db.property.findFirst({
+      where: {
+        id: propertyId,
+        profileId: user.id,
+      },
+    });
+    ensureExists(property, 'Property');
+
     const rawData = Object.fromEntries(formData);
     const validatedFields = validateWithZodSchema(propertySchema, rawData);
+    
     await db.property.update({
       where: {
         id: propertyId,
@@ -589,7 +861,7 @@ export const updatePropertyAction = async (
     revalidatePath(`/rentals/${propertyId}/edit`);
     return { message: 'Update Successful' };
   } catch (error) {
-    return renderError(error);
+    return handleServerActionError(error);
   }
 };
 
@@ -601,9 +873,32 @@ export const updatePropertyImageAction = async (
   const propertyId = formData.get('id') as string;
 
   try {
+    if (!propertyId) {
+      throw new ValidationError('Property ID is required', 'id');
+    }
+
+    // 验证房源存在且属于当前用户
+    const property = await db.property.findFirst({
+      where: {
+        id: propertyId,
+        profileId: user.id,
+      },
+    });
+    ensureExists(property, 'Property');
+
     const image = formData.get('image') as File;
+    if (!image) {
+      throw new ValidationError('Image is required', 'image');
+    }
+
     const validatedFields = validateWithZodSchema(imageSchema, { image });
-    const fullPath = await uploadImage(validatedFields.image);
+    
+    let fullPath: string;
+    try {
+      fullPath = await uploadImage(validatedFields.image);
+    } catch (error) {
+      throw new ExternalServiceError('Supabase', 'Failed to upload property image', { error });
+    }
 
     await db.property.update({
       where: {
@@ -617,7 +912,7 @@ export const updatePropertyImageAction = async (
     revalidatePath(`/rentals/${propertyId}/edit`);
     return { message: 'Property Image Updated Successful' };
   } catch (error) {
-    return renderError(error);
+    return handleServerActionError(error);
   }
 };
 
