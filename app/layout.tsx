@@ -9,8 +9,8 @@ import ErrorBoundary from '@/components/ErrorBoundary'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'HomeAway - 短租预订平台',
-  description: 'Feel at home, away from home. 现代化的短租预订平台，展示全栈开发能力。',
+  title: 'HomeAway - Short-Term Rental Booking Platform',
+  description: 'Feel at home, away from home. A modern short-term rental booking platform showcasing full-stack development capabilities.',
   keywords: ['短租', '预订', 'Next.js', '全栈开发'],
 }
 
