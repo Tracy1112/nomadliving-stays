@@ -1,0 +1,10 @@
+# This file defines code owners for the repository
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owner for all files
+* @Tracy1112
+
+# Specific paths can have different owners
+# /app/ @frontend-team
+# /api/ @backend-team
+

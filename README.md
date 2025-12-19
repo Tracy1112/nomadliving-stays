@@ -2,10 +2,12 @@
 
 > A production-ready, full-stack short-term rental booking platform built for freelance clients in Australia. Demonstrates modern web development practices, enterprise-level code quality, and real-world business problem-solving.
 
+[![CI](https://github.com/Tracy1112/04-HomeAway_NextJs/actions/workflows/ci.yml/badge.svg)](https://github.com/Tracy1112/04-HomeAway_NextJs/actions/workflows/ci.yml)
 [![Next.js](https://img.shields.io/badge/Next.js-14.2-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![Prisma](https://img.shields.io/badge/Prisma-5.12-2D3748?style=for-the-badge&logo=prisma)](https://www.prisma.io/)
 [![Stripe](https://img.shields.io/badge/Stripe-15.8-635BFF?style=for-the-badge&logo=stripe)](https://stripe.com/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
 
 ## 📋 Table of Contents
@@ -194,8 +196,8 @@ This platform addresses real-world business needs for property rental management
 
 ```bash
 # Clone the repository
-git clone <repository-url>
-cd 02-HomeAway_Next
+git clone https://github.com/Tracy1112/04-HomeAway_NextJs.git
+cd 04-HomeAway_NextJs
 
 # Install dependencies
 npm install
@@ -616,11 +618,14 @@ This project showcases proficiency in:
 
 ## 📚 Documentation
 
-- [Project Transformation Plan](./PROJECT_TRANSFORMATION_PLAN.md) - Project evolution and planning
-- [Performance Optimizations](./PERFORMANCE_OPTIMIZATIONS.md) - Detailed performance improvements
-- [Testing Guide](./TESTING_GUIDE.md) - Testing strategy and best practices
-- [Deployment Guide](./DEPLOYMENT.md) - Step-by-step deployment instructions
-- [Project Summary](./PROJECT_SUMMARY.md) - Project overview and highlights
+> **Note**: Additional documentation files are available in the repository but are excluded from GitHub per project configuration. Contact me for access to:
+> - Project Transformation Plan
+> - Performance Optimizations Guide
+> - Testing Guide
+> - Deployment Guide
+> - Project Summary
+
+For detailed technical documentation, please refer to the inline code comments and this README.
 
 ---
 
@@ -640,9 +645,40 @@ MIT License - See LICENSE file for details
 
 Developed as a freelance project for Australian clients, demonstrating full-stack web development capabilities and production-ready code quality.
 
-**Contact**: [Your contact information]  
+### 🎯 Project Purpose
+This project serves as a portfolio piece showcasing:
+- **Full-Stack Development**: End-to-end application development from database to UI
+- **Production-Ready Code**: Enterprise-level code quality, error handling, and testing
+- **Modern Tech Stack**: Latest industry-standard technologies and best practices
+- **Real-World Problem Solving**: Complex business requirements (booking system, payments, property management)
+- **Australian Market Experience**: Built specifically for Australian freelance clients
+
+### 📧 Contact
 **Location**: Australia  
-**Availability**: Open to freelance opportunities
+**Availability**: Open to freelance and full-time opportunities  
+**Portfolio**: [Your portfolio URL]  
+**LinkedIn**: [Your LinkedIn profile]
+
+---
+
+## 🌐 Live Demo
+
+<!-- If you have a deployed version, add the link here -->
+🔗 **Live Demo**: [Deploy on Vercel/Netlify and add link here]
+
+> 💡 **Note**: This is a portfolio project. For a live demonstration, please contact me directly.
+
+---
+
+## 📸 Screenshots
+
+<!-- Add screenshots of your application here -->
+<!-- 
+![Home Page](./screenshots/home.png)
+![Property Details](./screenshots/property-details.png)
+![Booking Flow](./screenshots/booking.png)
+![Admin Dashboard](./screenshots/admin.png)
+-->
 
 ---
 
