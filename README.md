@@ -674,17 +674,6 @@ This project serves as a portfolio piece showcasing:
 
 > 💡 **Note**: This is a portfolio project demonstrating full-stack development capabilities. The demo is deployed on Vercel's free tier.
 
-## 🎥 Demo Video
-
-<!-- Add your demo video here once uploaded to YouTube/Vimeo -->
-<!--
-[![Demo Video](https://img.youtube.com/vi/YOUR_VIDEO_ID/maxresdefault.jpg)](https://www.youtube.com/watch?v=YOUR_VIDEO_ID)
-
-> Click the image above to watch the full demo video
--->
-
-📹 **Video Guide**: See [DEMO_VIDEO_GUIDE.md](./DEMO_VIDEO_GUIDE.md) for instructions on creating a demo video.
-
 ---
 
 ## 📸 Screenshots
