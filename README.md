@@ -2,7 +2,7 @@
 
 > A production-ready, full-stack short-term rental booking platform built for freelance clients in Australia. Demonstrates modern web development practices, enterprise-level code quality, and real-world business problem-solving.
 
-[![CI](https://github.com/Tracy1112/homeaway-booking-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/Tracy1112/homeaway-booking-platform/actions/workflows/ci.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/Tracy1112/homeaway-booking-platform/ci.yml?branch=main&style=for-the-badge&logo=github-actions&logoColor=white&label=CI)](https://github.com/Tracy1112/homeaway-booking-platform/actions/workflows/ci.yml)
 [![Next.js](https://img.shields.io/badge/Next.js-14.2-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![Prisma](https://img.shields.io/badge/Prisma-5.12-2D3748?style=for-the-badge&logo=prisma)](https://www.prisma.io/)
