@@ -1,12 +1,4 @@
 import Stripe from 'stripe';
-
-// 环境变量验证
-const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
-if (!stripeSecretKey) {
-  throw new Error('STRIPE_SECRET_KEY environment variable is not set');
-}
-
-const stripe = new Stripe(stripeSecretKey);
 import { redirect } from 'next/navigation';
 import { NextResponse, type NextRequest } from 'next/server';
 import db from '@/utils/db';
@@ -18,6 +10,15 @@ import {
   ensureExists,
 } from '@/utils/errors';
 
+// 延迟创建 Stripe 客户端，只在需要时检查环境变量
+function getStripeClient() {
+  const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+  if (!stripeSecretKey) {
+    throw new Error('STRIPE_SECRET_KEY environment variable is not set');
+  }
+  return new Stripe(stripeSecretKey);
+}
+
 export const GET = async (req: NextRequest) => {
   try {
     const { searchParams } = new URL(req.url);
@@ -26,6 +27,9 @@ export const GET = async (req: NextRequest) => {
     if (!session_id) {
       throw new PaymentError('Session ID is required');
     }
+
+    // 在函数内部获取 Stripe 客户端，避免构建时错误
+    const stripe = getStripeClient();
 
     let session: Stripe.Checkout.Session;
     try {
