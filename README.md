@@ -2,6 +2,7 @@
 
 > A production-ready, full-stack short-term rental booking platform built for freelance clients in Australia. Demonstrates modern web development practices, enterprise-level code quality, and real-world business problem-solving.
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Site-00C7B7?style=for-the-badge&logo=vercel&logoColor=white)](https://homeaway-hub.vercel.app)
 [![CI](https://img.shields.io/github/actions/workflow/status/Tracy1112/homeaway-booking-platform/ci.yml?branch=main&style=for-the-badge&logo=github-actions&logoColor=white&label=CI)](https://github.com/Tracy1112/homeaway-booking-platform/actions/workflows/ci.yml)
 [![Next.js](https://img.shields.io/badge/Next.js-14.2-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
@@ -676,7 +677,7 @@ This project serves as a portfolio piece showcasing:
 ## 🎥 Demo Video
 
 <!-- Add your demo video here once uploaded to YouTube/Vimeo -->
-<!-- 
+<!--
 [![Demo Video](https://img.youtube.com/vi/YOUR_VIDEO_ID/maxresdefault.jpg)](https://www.youtube.com/watch?v=YOUR_VIDEO_ID)
 
 > Click the image above to watch the full demo video
