@@ -57,6 +57,13 @@ jest.mock('@/utils/db', () => ({
       findFirst: jest.fn(),
       create: jest.fn(),
       delete: jest.fn(),
+      groupBy: jest.fn(),
+    },
+    favorite: {
+      findMany: jest.fn(),
+      findFirst: jest.fn(),
+      create: jest.fn(),
+      delete: jest.fn(),
     },
   },
 }));
@@ -544,6 +551,376 @@ describe('Review Actions', () => {
       expect(result).toHaveProperty('message');
       expect(result.message).toContain('not found');
       expect(db.review.create).not.toHaveBeenCalled();
+    });
+  });
+});
+
+describe('Favorite Actions', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  const mockUser = {
+    id: 'user_123',
+    privateMetadata: { hasProfile: true },
+  };
+
+  describe('fetchFavoriteId', () => {
+    it('should return favorite ID if exists', async () => {
+      const { fetchFavoriteId } = require('@/utils/actions');
+      (currentUser as jest.Mock).mockResolvedValue(mockUser);
+      (db.favorite.findFirst as jest.Mock).mockResolvedValue({
+        id: 'favorite_123',
+      });
+
+      const favoriteId = await fetchFavoriteId({ propertyId: 'prop_123' });
+
+      expect(favoriteId).toBe('favorite_123');
+      expect(db.favorite.findFirst).toHaveBeenCalledWith({
+        where: {
+          propertyId: 'prop_123',
+          profileId: 'user_123',
+        },
+        select: { id: true },
+      });
+    });
+
+    it('should return null if favorite does not exist', async () => {
+      const { fetchFavoriteId } = require('@/utils/actions');
+      (currentUser as jest.Mock).mockResolvedValue(mockUser);
+      (db.favorite.findFirst as jest.Mock).mockResolvedValue(null);
+
+      const favoriteId = await fetchFavoriteId({ propertyId: 'prop_123' });
+
+      expect(favoriteId).toBeNull();
+    });
+  });
+
+  describe('toggleFavoriteAction', () => {
+    it('should add favorite when not exists', async () => {
+      const { toggleFavoriteAction } = require('@/utils/actions');
+      const { revalidatePath } = require('next/cache');
+      (currentUser as jest.Mock).mockResolvedValue(mockUser);
+      
+      (db.property.findUnique as jest.Mock).mockResolvedValue({ id: 'prop_123' });
+      (db.favorite.findFirst as jest.Mock).mockResolvedValue(null);
+      (db.favorite.create as jest.Mock).mockResolvedValue({ id: 'favorite_123' });
+
+      const result = await toggleFavoriteAction({
+        propertyId: 'prop_123',
+        favoriteId: null,
+        pathname: '/properties/prop_123',
+      });
+
+      expect(db.favorite.create).toHaveBeenCalled();
+      expect(result).toHaveProperty('message', 'Added to Faves');
+      expect(revalidatePath).toHaveBeenCalled();
+    });
+
+    it('should remove favorite when exists', async () => {
+      const { toggleFavoriteAction } = require('@/utils/actions');
+      const { revalidatePath } = require('next/cache');
+      (currentUser as jest.Mock).mockResolvedValue(mockUser);
+      
+      (db.property.findUnique as jest.Mock).mockResolvedValue({ id: 'prop_123' });
+      (db.favorite.delete as jest.Mock).mockResolvedValue({ id: 'favorite_123' });
+
+      const result = await toggleFavoriteAction({
+        propertyId: 'prop_123',
+        favoriteId: 'favorite_123',
+        pathname: '/properties/prop_123',
+      });
+
+      expect(db.favorite.delete).toHaveBeenCalledWith({
+        where: { id: 'favorite_123' },
+      });
+      expect(result).toHaveProperty('message', 'Removed from Faves');
+      expect(revalidatePath).toHaveBeenCalled();
+    });
+
+    it('should handle property not found', async () => {
+      const { toggleFavoriteAction } = require('@/utils/actions');
+      (currentUser as jest.Mock).mockResolvedValue(mockUser);
+      (db.property.findUnique as jest.Mock).mockResolvedValue(null);
+
+      const result = await toggleFavoriteAction({
+        propertyId: 'nonexistent',
+        favoriteId: null,
+        pathname: '/properties/nonexistent',
+      });
+
+      expect(result).toHaveProperty('message');
+      expect(result.message).toContain('not found');
+      expect(db.favorite.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('fetchFavorites', () => {
+    it('should fetch user favorites', async () => {
+      const { fetchFavorites } = require('@/utils/actions');
+      (currentUser as jest.Mock).mockResolvedValue(mockUser);
+      
+      const mockFavorites = [
+        {
+          property: {
+            id: 'prop_1',
+            name: 'Beach House',
+            tagline: 'Beautiful beach house',
+            country: 'AU',
+            price: 100,
+            image: 'image1.jpg',
+          },
+        },
+        {
+          property: {
+            id: 'prop_2',
+            name: 'Mountain Cabin',
+            tagline: 'Cozy mountain cabin',
+            country: 'AU',
+            price: 150,
+            image: 'image2.jpg',
+          },
+        },
+      ];
+      
+      (db.favorite.findMany as jest.Mock).mockResolvedValue(mockFavorites);
+
+      const favorites = await fetchFavorites();
+
+      // Verify the function was called (exact structure may vary)
+      expect(db.favorite.findMany).toHaveBeenCalled();
+      const callArgs = (db.favorite.findMany as jest.Mock).mock.calls[0][0];
+      expect(callArgs.where.profileId).toBe('user_123');
+      expect(callArgs.select).toBeDefined();
+      // The function maps favorites to return only properties
+      expect(favorites).toHaveLength(2);
+      expect(favorites[0]).toHaveProperty('name');
+    });
+  });
+});
+
+describe('Booking Management Actions', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  const mockUser = {
+    id: 'user_123',
+    privateMetadata: { hasProfile: true },
+  };
+
+  describe('fetchBookings', () => {
+    it('should fetch user bookings', async () => {
+      const { fetchBookings } = require('@/utils/actions');
+      (currentUser as jest.Mock).mockResolvedValue(mockUser);
+      
+      const mockBookings = [
+        {
+          id: 'booking_1',
+          checkIn: new Date('2024-01-01'),
+          checkOut: new Date('2024-01-04'),
+          property: {
+            id: 'prop_1',
+            name: 'Beach House',
+          },
+        },
+      ];
+      
+      (db.booking.findMany as jest.Mock).mockResolvedValue(mockBookings);
+
+      const bookings = await fetchBookings();
+
+      expect(db.booking.findMany).toHaveBeenCalledWith({
+        where: {
+          profileId: 'user_123',
+          paymentStatus: true,
+        },
+        include: {
+          property: {
+            select: {
+              id: true,
+              name: true,
+              country: true,
+            },
+          },
+        },
+        orderBy: { checkIn: 'desc' },
+      });
+      expect(bookings).toHaveLength(1);
+    });
+  });
+
+  describe('deleteBookingAction', () => {
+    it('should delete booking successfully', async () => {
+      const { deleteBookingAction } = require('@/utils/actions');
+      const { revalidatePath } = require('next/cache');
+      (currentUser as jest.Mock).mockResolvedValue(mockUser);
+      
+      const mockBooking = {
+        id: 'booking_123',
+        profileId: 'user_123',
+      };
+      
+      (db.booking.findFirst as jest.Mock).mockResolvedValue(mockBooking);
+      (db.booking.delete as jest.Mock).mockResolvedValue(mockBooking);
+
+      const result = await deleteBookingAction({ bookingId: 'booking_123' });
+
+      expect(db.booking.delete).toHaveBeenCalledWith({
+        where: {
+          id: 'booking_123',
+          profileId: 'user_123',
+        },
+      });
+      expect(result).toHaveProperty('message', 'Booking deleted successfully');
+      expect(revalidatePath).toHaveBeenCalledWith('/bookings');
+    });
+
+    it('should handle booking not found', async () => {
+      const { deleteBookingAction } = require('@/utils/actions');
+      (currentUser as jest.Mock).mockResolvedValue(mockUser);
+      (db.booking.findFirst as jest.Mock).mockResolvedValue(null);
+
+      const result = await deleteBookingAction({ bookingId: 'nonexistent' });
+
+      expect(result).toHaveProperty('message');
+      expect(result.message).toContain('not found');
+      expect(db.booking.delete).not.toHaveBeenCalled();
+    });
+
+    it('should prevent deleting other users bookings', async () => {
+      const { deleteBookingAction } = require('@/utils/actions');
+      (currentUser as jest.Mock).mockResolvedValue(mockUser);
+      (db.booking.findFirst as jest.Mock).mockResolvedValue(null); // Not found for this user
+
+      const result = await deleteBookingAction({ bookingId: 'other_user_booking' });
+
+      expect(result).toHaveProperty('message');
+      expect(result.message).toContain('not found');
+      expect(db.booking.delete).not.toHaveBeenCalled();
+    });
+  });
+});
+
+describe('Review Management Actions', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  const mockUser = {
+    id: 'user_123',
+    privateMetadata: { hasProfile: true },
+  };
+
+  describe('fetchPropertyReviews', () => {
+    it('should fetch property reviews', async () => {
+      const { fetchPropertyReviews } = require('@/utils/actions');
+      
+      const mockReviews = [
+        {
+          id: 'review_1',
+          rating: 5,
+          comment: 'Great place!',
+          profile: {
+            firstName: 'John',
+            profileImage: 'image.jpg',
+          },
+        },
+      ];
+      
+      (db.review.findMany as jest.Mock).mockResolvedValue(mockReviews);
+
+      const reviews = await fetchPropertyReviews('prop_123');
+
+      expect(reviews).toHaveLength(1);
+      expect(reviews[0].rating).toBe(5);
+    });
+  });
+
+  describe('fetchPropertyRating', () => {
+    it('should calculate average rating', async () => {
+      const { fetchPropertyRating } = require('@/utils/actions');
+      
+      const mockGroupByResult = [
+        {
+          propertyId: 'prop_123',
+          _avg: {
+            rating: 4.67,
+          },
+          _count: {
+            rating: 3,
+          },
+        },
+      ];
+      
+      (db.review.groupBy as jest.Mock).mockResolvedValue(mockGroupByResult);
+
+      const result = await fetchPropertyRating('prop_123');
+
+      // The function returns { rating: string, count: number }
+      expect(result).toBeDefined();
+      expect(result).toHaveProperty('rating');
+      expect(result).toHaveProperty('count');
+      // rating is a string from toFixed(1)
+      expect(String(result.rating)).toBe('4.7');
+      expect(result.count).toBe(3);
+      expect(db.review.groupBy).toHaveBeenCalled();
+    });
+
+    it('should return 0 when no reviews', async () => {
+      const { fetchPropertyRating } = require('@/utils/actions');
+      (db.review.groupBy as jest.Mock).mockResolvedValue([]);
+
+      const result = await fetchPropertyRating('prop_123');
+
+      expect(result).toBeDefined();
+      expect(result).toHaveProperty('rating');
+      expect(result).toHaveProperty('count');
+      // When result[0] is undefined, rating defaults to 0 (number)
+      // The code uses: result[0]?._avg.rating?.toFixed(1) ?? 0
+      // So it returns 0 (number) when no reviews
+      expect(result.rating).toBe(0);
+      expect(result.count).toBe(0);
+    });
+  });
+
+  describe('deleteReviewAction', () => {
+    it('should delete review successfully', async () => {
+      const { deleteReviewAction } = require('@/utils/actions');
+      const { revalidatePath } = require('next/cache');
+      (currentUser as jest.Mock).mockResolvedValue(mockUser);
+      
+      const mockReview = {
+        id: 'review_123',
+        profileId: 'user_123',
+        propertyId: 'prop_123',
+      };
+      
+      (db.review.findFirst as jest.Mock).mockResolvedValue(mockReview);
+      (db.review.delete as jest.Mock).mockResolvedValue(mockReview);
+
+      const result = await deleteReviewAction({ reviewId: 'review_123' });
+
+      expect(db.review.delete).toHaveBeenCalledWith({
+        where: {
+          id: 'review_123',
+          profileId: 'user_123',
+        },
+      });
+      expect(result).toHaveProperty('message');
+      expect(revalidatePath).toHaveBeenCalled();
+    });
+
+    it('should handle review not found', async () => {
+      const { deleteReviewAction } = require('@/utils/actions');
+      (currentUser as jest.Mock).mockResolvedValue(mockUser);
+      (db.review.findFirst as jest.Mock).mockResolvedValue(null);
+
+      const result = await deleteReviewAction({ reviewId: 'nonexistent' });
+
+      expect(result).toHaveProperty('message');
+      expect(result.message).toContain('not found');
+      expect(db.review.delete).not.toHaveBeenCalled();
     });
   });
 });
