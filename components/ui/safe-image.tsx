@@ -45,11 +45,15 @@ export default function SafeImage({
 
   const fallback = fallbackIcon || defaultFallback;
 
-  // Check if we should use unoptimized mode (for Supabase URLs when paused)
+  // Check if we should use unoptimized mode
+  // For Supabase URLs, use unoptimized to avoid 400 errors when project is paused
+  // Next.js Image optimizer tries to fetch the image server-side, which fails with 400
+  // when Supabase is paused. Using unoptimized bypasses the optimizer.
+  const isSupabaseUrl = src.includes('supabase.co');
   const shouldUnoptimize = 
     src.startsWith('data:') || 
     src.startsWith('blob:') ||
-    (src.includes('supabase.co') && useNativeImg);
+    isSupabaseUrl; // Always unoptimize Supabase URLs to prevent 400 errors
 
   // Handle image load error
   const handleError = () => {

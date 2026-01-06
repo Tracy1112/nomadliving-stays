@@ -1,4 +1,4 @@
-import Image from 'next/image';
+import SafeImage from '../ui/safe-image';
 
 type UserInfoProps = {
   profile: {
@@ -9,7 +9,7 @@ type UserInfoProps = {
 function UserInfo({ profile: { profileImage, firstName } }: UserInfoProps) {
   return (
     <article className='grid grid-cols-[auto,1fr] gap-4 mt-4'>
-      <Image
+      <SafeImage
         src={profileImage}
         alt={firstName}
         width={50}
