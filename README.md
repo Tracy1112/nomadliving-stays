@@ -530,10 +530,12 @@ NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_key
 CLERK_SECRET_KEY=your_clerk_secret
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your_stripe_key
 STRIPE_SECRET_KEY=your_stripe_secret
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_key
+SUPABASE_URL=your_supabase_url
+SUPABASE_KEY=your_supabase_anon_key
 ADMIN_USER_ID=your_admin_user_id
 ```
+
+> **Note**: If your Supabase project is paused (common with free tier after inactivity), you can resume it from the [Supabase Dashboard](https://supabase.com/dashboard). The application includes error handling for image loading failures, so it will gracefully display fallback icons instead of crashing. Free tier projects pause after 7 days of inactivity but can be resumed within 79 days.
 
 ### Database Migration
 
