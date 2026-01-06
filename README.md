@@ -34,6 +34,7 @@
 - [Screenshots](#screenshots)
 - [Resources](#resources)
 
+<a id="overview"></a>
 ## 🎯 Overview
 
 **HomeAway** is a comprehensive short-term rental booking platform developed as a freelance project for Australian clients. This production-ready application demonstrates end-to-end development capabilities, from database design to frontend implementation, with a focus on production-ready code quality, security, and performance.
@@ -71,6 +72,7 @@ This platform addresses real-world business needs for property rental management
 
 ---
 
+<a id="key-features"></a>
 ## ✨ Key Features
 
 ### 🏠 Property Management
@@ -114,6 +116,7 @@ This platform addresses real-world business needs for property rental management
 
 ---
 
+<a id="tech-stack"></a>
 ## 🛠️ Tech Stack
 
 ### Frontend
@@ -144,6 +147,7 @@ This platform addresses real-world business needs for property rental management
 
 ---
 
+<a id="project-architecture"></a>
 ## 🏗️ Project Architecture
 
 ### State Management Strategy
@@ -190,6 +194,7 @@ This platform addresses real-world business needs for property rental management
 
 ---
 
+<a id="getting-started"></a>
 ## 🚀 Getting Started
 
 ### Prerequisites
@@ -249,6 +254,7 @@ npm run test:coverage # Run tests with coverage
 
 ---
 
+<a id="project-structure"></a>
 ## 📁 Project Structure
 
 ```
@@ -335,6 +341,7 @@ HomeAway/
 
 ---
 
+<a id="core-functionality"></a>
 ## 💡 Core Functionality
 
 ### Booking System
@@ -374,6 +381,7 @@ Secure payment processing using Stripe Checkout:
 
 ---
 
+<a id="performance-optimizations"></a>
 ## ⚡ Performance Optimizations
 
 ### 1. Image Optimization
@@ -432,6 +440,7 @@ Secure payment processing using Stripe Checkout:
 
 ---
 
+<a id="security-features"></a>
 ## 🔒 Security Features
 
 ### Authentication & Authorization
@@ -470,6 +479,7 @@ Secure payment processing using Stripe Checkout:
 
 ---
 
+<a id="testing"></a>
 ## 🧪 Testing
 
 ### Test Coverage
@@ -520,6 +530,7 @@ See [TESTING_GUIDE.md](./TESTING_GUIDE.md) for detailed testing documentation.
 
 ---
 
+<a id="deployment"></a>
 ## 🚀 Deployment
 
 ### Vercel (Recommended)
@@ -555,6 +566,7 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions.
 
 ---
 
+<a id="project-metrics"></a>
 ## 📊 Project Metrics
 
 ### Code Statistics
@@ -583,6 +595,7 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions.
 
 ---
 
+<a id="skills-demonstrated"></a>
 ## 🎯 Skills Demonstrated
 
 This project showcases proficiency in:
@@ -625,6 +638,7 @@ This project showcases proficiency in:
 
 ---
 
+<a id="documentation"></a>
 ## 📚 Documentation
 
 > **Note**: Additional documentation files are available in the repository but are excluded from GitHub per project configuration. Contact me for access to:
@@ -639,18 +653,21 @@ For detailed technical documentation, please refer to the inline code comments a
 
 ---
 
+<a id="contributing"></a>
 ## 🤝 Contributing
 
 This is a freelance project portfolio piece. Suggestions and feedback are welcome!
 
 ---
 
+<a id="license"></a>
 ## 📄 License
 
 MIT License - See LICENSE file for details
 
 ---
 
+<a id="developer"></a>
 ## 👨‍💻 Developer
 
 Developed as a freelance project for Australian clients, demonstrating full-stack web development capabilities and production-ready code quality.
@@ -674,6 +691,7 @@ This project serves as a portfolio piece showcasing:
 
 ---
 
+<a id="live-demo"></a>
 ## 🌐 Live Demo
 
 🔗 **Live Demo**: [https://homeaway-hub.vercel.app](https://homeaway-hub.vercel.app)
@@ -684,6 +702,7 @@ This project serves as a portfolio piece showcasing:
 
 ---
 
+<a id="screenshots"></a>
 ## 📸 Screenshots
 
 ### Home Page
@@ -712,6 +731,7 @@ Create and manage property listings with detailed information and image uploads.
 
 ---
 
+<a id="resources"></a>
 ## 🔗 Resources
 
 - [Next.js Documentation](https://nextjs.org/docs)
