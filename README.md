@@ -780,6 +780,7 @@ This project serves as a portfolio piece showcasing:
 ### 💼 Why This Project?
 
 This project demonstrates:
+
 - **End-to-End Development**: From database design to production deployment
 - **Production-Ready Code**: Enterprise-level quality, testing, and error handling
 - **Modern Tech Stack**: Industry-standard technologies used in Australian tech companies

@@ -154,4 +154,194 @@ describe('/api/payment', () => {
 
     expect(response.status).toBe(502) // ExternalServiceError returns 502
   })
+
+  it('should return 500 when bookingId is missing', async () => {
+    const request = createMockRequest('http://localhost:3000/api/payment', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        origin: 'http://localhost:3000',
+      },
+      body: JSON.stringify({}), // No bookingId
+    })
+
+    const response = await POST(request)
+    const data = await response.json()
+
+    // handleApiError converts generic Error to 500
+    expect(response.status).toBe(500)
+    expect(data.error.message).toContain('Booking ID is required')
+    expect(db.booking.findUnique).not.toHaveBeenCalled()
+  })
+
+  it('should return 500 when origin header is missing', async () => {
+    const request = createMockRequest('http://localhost:3000/api/payment', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        // No origin header
+      },
+      body: JSON.stringify({ bookingId: 'booking-1' }),
+    })
+
+    const response = await POST(request)
+    const data = await response.json()
+
+    // handleApiError converts generic Error to 500
+    expect(response.status).toBe(500)
+    expect(data.error.message).toContain('Origin header is required')
+  })
+
+  it('should return 402 when booking is already paid', async () => {
+    const mockBooking = {
+      id: 'booking-1',
+      totalNights: 3,
+      orderTotal: 391,
+      paymentStatus: true, // Already paid
+      checkIn: new Date('2024-01-01'),
+      checkOut: new Date('2024-01-04'),
+      property: {
+        name: 'Beach House',
+        image: '/images/beach-house.jpg',
+      },
+    }
+
+    ;(db.booking.findUnique as jest.Mock).mockResolvedValue(mockBooking)
+
+    const request = createMockRequest('http://localhost:3000/api/payment', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        origin: 'http://localhost:3000',
+      },
+      body: JSON.stringify({ bookingId: 'booking-1' }),
+    })
+
+    const response = await POST(request)
+    const data = await response.json()
+
+    // PaymentError returns 402
+    expect(response.status).toBe(402)
+    expect(data.error.message).toContain('already been paid')
+    
+    const Stripe = require('stripe')
+    const stripeInstance = new Stripe()
+    expect(stripeInstance.checkout.sessions.create).not.toHaveBeenCalled()
+  })
+
+  it('should return 402 when orderTotal is invalid', async () => {
+    const mockBooking = {
+      id: 'booking-1',
+      totalNights: 3,
+      orderTotal: 0, // Invalid: zero or negative
+      checkIn: new Date('2024-01-01'),
+      checkOut: new Date('2024-01-04'),
+      property: {
+        name: 'Beach House',
+        image: '/images/beach-house.jpg',
+      },
+    }
+
+    ;(db.booking.findUnique as jest.Mock).mockResolvedValue(mockBooking)
+
+    const request = createMockRequest('http://localhost:3000/api/payment', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        origin: 'http://localhost:3000',
+      },
+      body: JSON.stringify({ bookingId: 'booking-1' }),
+    })
+
+    const response = await POST(request)
+    const data = await response.json()
+
+    // PaymentError returns 402
+    expect(response.status).toBe(402)
+    expect(data.error.message).toContain('Invalid order total')
+  })
+
+  it('should return 402 when Stripe client secret is missing', async () => {
+    const mockBooking = {
+      id: 'booking-1',
+      totalNights: 3,
+      orderTotal: 391,
+      checkIn: new Date('2024-01-01'),
+      checkOut: new Date('2024-01-04'),
+      property: {
+        name: 'Beach House',
+        image: '/images/beach-house.jpg',
+      },
+    }
+
+    const mockSession = {
+      // Missing client_secret - PaymentError returns 402
+    }
+
+    ;(db.booking.findUnique as jest.Mock).mockResolvedValue(mockBooking)
+
+    const Stripe = require('stripe')
+    const stripeInstance = new Stripe()
+    stripeInstance.checkout.sessions.create.mockResolvedValue(mockSession)
+
+    const request = createMockRequest('http://localhost:3000/api/payment', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        origin: 'http://localhost:3000',
+      },
+      body: JSON.stringify({ bookingId: 'booking-1' }),
+    })
+
+    const response = await POST(request)
+    const data = await response.json()
+
+    expect(response.status).toBe(402) // PaymentError returns 402
+    expect(data.error.message).toContain('client secret')
+  })
+
+  it('should include correct metadata in Stripe session', async () => {
+    const mockBooking = {
+      id: 'booking-1',
+      totalNights: 3,
+      orderTotal: 391,
+      checkIn: new Date('2024-01-01'),
+      checkOut: new Date('2024-01-04'),
+      property: {
+        name: 'Beach House',
+        image: '/images/beach-house.jpg',
+      },
+    }
+
+    const mockSession = {
+      client_secret: 'cs_test_mock_secret',
+    }
+
+    ;(db.booking.findUnique as jest.Mock).mockResolvedValue(mockBooking)
+
+    const Stripe = require('stripe')
+    const stripeInstance = new Stripe()
+    stripeInstance.checkout.sessions.create.mockResolvedValue(mockSession)
+
+    const request = createMockRequest('http://localhost:3000/api/payment', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        origin: 'http://localhost:3000',
+      },
+      body: JSON.stringify({ bookingId: 'booking-1' }),
+    })
+
+    await POST(request)
+
+    expect(stripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: {
+          bookingId: 'booking-1',
+        },
+        mode: 'payment',
+        ui_mode: 'embedded',
+      })
+    )
+  })
 })

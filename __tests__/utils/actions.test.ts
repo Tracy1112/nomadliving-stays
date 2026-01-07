@@ -39,6 +39,7 @@ jest.mock('@/utils/db', () => ({
     },
     property: {
       findMany: jest.fn(),
+      findFirst: jest.fn(),
       findUnique: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
@@ -51,6 +52,7 @@ jest.mock('@/utils/db', () => ({
       create: jest.fn(),
       delete: jest.fn(),
       deleteMany: jest.fn(),
+      groupBy: jest.fn(),
     },
     review: {
       findMany: jest.fn(),
@@ -921,6 +923,242 @@ describe('Review Management Actions', () => {
       expect(result).toHaveProperty('message');
       expect(result.message).toContain('not found');
       expect(db.review.delete).not.toHaveBeenCalled();
+    });
+  });
+});
+
+describe('Property Management Actions', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  const mockUser = {
+    id: 'user_123',
+    privateMetadata: { hasProfile: true },
+  };
+
+  describe('createPropertyAction', () => {
+    it('should create property successfully', async () => {
+      const { createPropertyAction } = require('@/utils/actions');
+      const { uploadImage } = require('@/utils/supabase');
+      const { redirect } = require('next/navigation');
+      
+      (currentUser as jest.Mock).mockResolvedValue(mockUser);
+      
+      const mockFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
+      const mockFormData = new FormData();
+      mockFormData.append('name', 'Test Property');
+      mockFormData.append('tagline', 'Great place');
+      mockFormData.append('description', 'Description');
+      mockFormData.append('price', '100');
+      mockFormData.append('country', 'AU');
+      mockFormData.append('category', 'house');
+      mockFormData.append('bedrooms', '2');
+      mockFormData.append('beds', '2');
+      mockFormData.append('baths', '1');
+      mockFormData.append('guests', '4');
+      mockFormData.append('image', mockFile);
+
+      (uploadImage as jest.Mock).mockResolvedValue('https://example.com/image.jpg');
+      (db.property.create as jest.Mock).mockResolvedValue({
+        id: 'prop_123',
+        name: 'Test Property',
+      });
+
+      await createPropertyAction({}, mockFormData);
+
+      expect(uploadImage).toHaveBeenCalled();
+      expect(db.property.create).toHaveBeenCalled();
+      expect(redirect).toHaveBeenCalledWith('/');
+    });
+
+    it('should handle missing image file', async () => {
+      const { createPropertyAction } = require('@/utils/actions');
+      (currentUser as jest.Mock).mockResolvedValue(mockUser);
+      
+      const mockFormData = new FormData();
+      mockFormData.append('name', 'Test Property');
+      // No image file
+
+      const result = await createPropertyAction({}, mockFormData);
+
+      expect(result).toHaveProperty('message');
+      expect(result.message).toContain('image');
+      expect(db.property.create).not.toHaveBeenCalled();
+    });
+
+    it('should handle image upload failure', async () => {
+      const { createPropertyAction } = require('@/utils/actions');
+      const { uploadImage } = require('@/utils/supabase');
+      (currentUser as jest.Mock).mockResolvedValue(mockUser);
+      
+      const mockFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
+      const mockFormData = new FormData();
+      mockFormData.append('name', 'Test Property');
+      mockFormData.append('tagline', 'Great place');
+      mockFormData.append('description', 'Description');
+      mockFormData.append('price', '100');
+      mockFormData.append('country', 'AU');
+      mockFormData.append('category', 'house');
+      mockFormData.append('bedrooms', '2');
+      mockFormData.append('beds', '2');
+      mockFormData.append('baths', '1');
+      mockFormData.append('guests', '4');
+      mockFormData.append('image', mockFile);
+
+      uploadImage.mockRejectedValue(new Error('Upload failed'));
+
+      const result = await createPropertyAction({}, mockFormData);
+
+      expect(result).toHaveProperty('message');
+      // ExternalServiceError message format: "Supabase error: Failed to upload property image"
+      // The message should indicate an error occurred
+      expect(result.message).toBeDefined();
+      expect(typeof result.message).toBe('string');
+      expect(result.message.length).toBeGreaterThan(0);
+      expect(db.property.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('updateProfileImageAction', () => {
+    it('should update profile image successfully', async () => {
+      const { updateProfileImageAction } = require('@/utils/actions');
+      const { uploadImage } = require('@/utils/supabase');
+      const { revalidatePath } = require('next/cache');
+      (currentUser as jest.Mock).mockResolvedValue(mockUser);
+      
+      const mockFile = new File(['test'], 'avatar.jpg', { type: 'image/jpeg' });
+      const mockFormData = new FormData();
+      mockFormData.append('image', mockFile);
+
+      uploadImage.mockResolvedValue('https://example.com/new-avatar.jpg');
+      (db.profile.update as jest.Mock).mockResolvedValue({
+        id: 'profile_123',
+        profileImage: 'https://example.com/new-avatar.jpg',
+      });
+
+      const result = await updateProfileImageAction({}, mockFormData);
+
+      expect(uploadImage).toHaveBeenCalled();
+      expect(db.profile.update).toHaveBeenCalledWith({
+        where: { clerkId: 'user_123' },
+        data: { profileImage: 'https://example.com/new-avatar.jpg' },
+      });
+      expect(result).toHaveProperty('message', 'Profile image updated successfully');
+      expect(revalidatePath).toHaveBeenCalledWith('/profile');
+    });
+
+    it('should handle missing image', async () => {
+      const { updateProfileImageAction } = require('@/utils/actions');
+      (currentUser as jest.Mock).mockResolvedValue(mockUser);
+      
+      const mockFormData = new FormData();
+      // No image
+
+      const result = await updateProfileImageAction({}, mockFormData);
+
+      expect(result).toHaveProperty('message');
+      expect(result.message).toContain('Image is required');
+      expect(db.profile.update).not.toHaveBeenCalled();
+    });
+  });
+});
+
+describe('Rental Management Actions', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  const mockUser = {
+    id: 'user_123',
+    privateMetadata: { hasProfile: true },
+  };
+
+  describe('fetchRentals', () => {
+    it('should fetch rentals with aggregated booking data', async () => {
+      const { fetchRentals } = require('@/utils/actions');
+      (currentUser as jest.Mock).mockResolvedValue(mockUser);
+      
+      const mockRentals = [
+        { id: 'prop_1', name: 'Property 1', price: 100 },
+        { id: 'prop_2', name: 'Property 2', price: 150 },
+      ];
+      
+      const mockAggregate = [
+        {
+          propertyId: 'prop_1',
+          _sum: { totalNights: 10, orderTotal: 1000 },
+        },
+      ];
+      
+      (db.property.findMany as jest.Mock).mockResolvedValue(mockRentals);
+      (db.booking.groupBy as jest.Mock).mockResolvedValue(mockAggregate);
+
+      const rentals = await fetchRentals();
+
+      expect(rentals).toHaveLength(2);
+      expect(rentals[0]).toHaveProperty('totalNightsSum', 10);
+      expect(rentals[0]).toHaveProperty('orderTotalSum', 1000);
+      expect(rentals[1]).toHaveProperty('totalNightsSum', 0);
+    });
+
+    it('should handle empty rentals list', async () => {
+      const { fetchRentals } = require('@/utils/actions');
+      (currentUser as jest.Mock).mockResolvedValue(mockUser);
+      (db.property.findMany as jest.Mock).mockResolvedValue([]);
+
+      const rentals = await fetchRentals();
+
+      expect(rentals).toEqual([]);
+      expect(db.booking.groupBy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('deleteRentalAction', () => {
+    it('should delete rental successfully', async () => {
+      const { deleteRentalAction } = require('@/utils/actions');
+      const { revalidatePath } = require('next/cache');
+      (currentUser as jest.Mock).mockResolvedValue(mockUser);
+      
+      const mockProperty = {
+        id: 'prop_123',
+        profileId: 'user_123',
+      };
+      
+      (db.property.findFirst as jest.Mock).mockResolvedValue(mockProperty);
+      (db.property.delete as jest.Mock).mockResolvedValue(mockProperty);
+
+      const result = await deleteRentalAction({ propertyId: 'prop_123' });
+
+      expect(db.property.delete).toHaveBeenCalledWith({
+        where: { id: 'prop_123' },
+      });
+      expect(result).toHaveProperty('message');
+      expect(revalidatePath).toHaveBeenCalled();
+    });
+
+    it('should handle property not found', async () => {
+      const { deleteRentalAction } = require('@/utils/actions');
+      (currentUser as jest.Mock).mockResolvedValue(mockUser);
+      (db.property.findFirst as jest.Mock).mockResolvedValue(null);
+
+      const result = await deleteRentalAction({ propertyId: 'nonexistent' });
+
+      expect(result).toHaveProperty('message');
+      expect(result.message).toContain('not found');
+      expect(db.property.delete).not.toHaveBeenCalled();
+    });
+
+    it('should prevent deleting other users properties', async () => {
+      const { deleteRentalAction } = require('@/utils/actions');
+      (currentUser as jest.Mock).mockResolvedValue(mockUser);
+      (db.property.findFirst as jest.Mock).mockResolvedValue(null); // Not found for this user
+
+      const result = await deleteRentalAction({ propertyId: 'other_user_property' });
+
+      expect(result).toHaveProperty('message');
+      expect(result.message).toContain('not found');
+      expect(db.property.delete).not.toHaveBeenCalled();
     });
   });
 });

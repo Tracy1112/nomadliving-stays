@@ -223,5 +223,103 @@ describe('/api/confirm', () => {
 
     expect(redirect).toHaveBeenCalledWith('/bookings?error=payment_failed')
   })
+
+  it('should handle invalid session status gracefully', async () => {
+    const mockSession = {
+      status: 'expired', // Invalid status
+      metadata: {
+        bookingId: 'booking-1',
+      },
+    }
+
+    const Stripe = require('stripe')
+    const stripeInstance = new Stripe()
+    stripeInstance.checkout.sessions.retrieve.mockResolvedValue(mockSession)
+
+    const request = createMockRequest(
+      'http://localhost:3000/api/confirm?session_id=session_123'
+    )
+
+    await GET(request)
+
+    expect(redirect).toHaveBeenCalledWith('/bookings?error=payment_failed')
+    expect(db.booking.findUnique).not.toHaveBeenCalled()
+  })
+
+  it('should handle Stripe session retrieve errors', async () => {
+    const Stripe = require('stripe')
+    const stripeInstance = new Stripe()
+    stripeInstance.checkout.sessions.retrieve.mockRejectedValue(
+      new Error('Stripe API error')
+    )
+
+    const request = createMockRequest(
+      'http://localhost:3000/api/confirm?session_id=invalid_session'
+    )
+
+    await GET(request)
+
+    expect(redirect).toHaveBeenCalledWith('/bookings?error=payment_failed')
+    expect(db.booking.findUnique).not.toHaveBeenCalled()
+  })
+
+  it('should validate session_id format', async () => {
+    const request = createMockRequest(
+      'http://localhost:3000/api/confirm?session_id='
+    )
+
+    await GET(request)
+
+    expect(redirect).toHaveBeenCalledWith('/bookings?error=payment_failed')
+  })
+
+  it('should handle empty metadata object', async () => {
+    const mockSession = {
+      status: 'complete',
+      metadata: null, // null metadata
+    }
+
+    const Stripe = require('stripe')
+    const stripeInstance = new Stripe()
+    stripeInstance.checkout.sessions.retrieve.mockResolvedValue(mockSession)
+
+    const request = createMockRequest(
+      'http://localhost:3000/api/confirm?session_id=session_123'
+    )
+
+    await GET(request)
+
+    expect(redirect).toHaveBeenCalledWith('/bookings?error=payment_failed')
+    expect(db.booking.findUnique).not.toHaveBeenCalled()
+  })
+
+  it('should prevent duplicate payment updates', async () => {
+    const mockSession = {
+      status: 'complete',
+      metadata: {
+        bookingId: 'booking-1',
+      },
+    }
+
+    const mockBooking = {
+      id: 'booking-1',
+      paymentStatus: true, // Already paid
+    }
+
+    const Stripe = require('stripe')
+    const stripeInstance = new Stripe()
+    stripeInstance.checkout.sessions.retrieve.mockResolvedValue(mockSession)
+    ;(db.booking.findUnique as jest.Mock).mockResolvedValue(mockBooking)
+
+    const request = createMockRequest(
+      'http://localhost:3000/api/confirm?session_id=session_123'
+    )
+
+    await GET(request)
+
+    // Should not update if already paid
+    expect(db.booking.update).not.toHaveBeenCalled()
+    expect(redirect).toHaveBeenCalledWith('/bookings')
+  })
 })
 
