@@ -893,9 +893,9 @@ describe('Review Management Actions', () => {
       expect(result).toHaveProperty('rating')
       expect(result).toHaveProperty('count')
       // When result[0] is undefined, rating defaults to 0 (number)
-      // The code uses: result[0]?._avg.rating?.toFixed(1) ?? 0
-      // So it returns 0 (number) when no reviews
-      expect(result.rating).toBe(0)
+      // The code uses: result[0]?._avg.rating?.toFixed(1) ?? '0'
+      // So it returns '0' (string) when no reviews (toFixed returns string)
+      expect(result.rating).toBe('0')
       expect(result.count).toBe(0)
     })
   })

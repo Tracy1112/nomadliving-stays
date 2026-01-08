@@ -11,7 +11,10 @@
 // Re-export all actions from their respective modules
 export * from './auth';
 export * from './profile';
-
-// Note: Other modules (property, favorite, review, booking, rental, admin)
-// will be added as they are created. For now, these are still in utils/actions.ts
+export * from './property';
+export * from './favorite';
+export * from './review';
+export * from './booking';
+export * from './rental';
+export * from './admin';
 
