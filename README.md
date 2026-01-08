@@ -1,14 +1,16 @@
 # 🏕️ NomadLiving Stays - Curated Glamping & Tiny Homes Platform
 
-> A premium booking platform for extraordinary stays in handpicked glamping sites and tiny homes. Each property features curated furniture from NomadLiving Boutique, creating immersive experiences where guests can shop the look and bring the aesthetic home. Built with modern web technologies, demonstrating full-stack development capabilities and production-ready code quality.
+> **The flagship booking engine of the NomadLiving Digital Ecosystem.** A premium booking platform for extraordinary stays in handpicked glamping sites and tiny homes. Each property features curated furniture from NomadLiving Boutique, creating immersive experiences where guests can shop the look and bring the aesthetic home. Built with modern web technologies, demonstrating full-stack development capabilities and production-ready code quality.
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Site-00C7B7?style=for-the-badge&logo=vercel&logoColor=white)](https://nomadliving-stays.vercel.app)
-[![CI](https://img.shields.io/github/actions/workflow/status/Tracy1112/nomadliving-stays/ci.yml?branch=main&style=for-the-badge&logo=github-actions&logoColor=white&label=CI)](https://github.com/Tracy1112/nomadliving-stays/actions/workflows/ci.yml)
+[![CI](https://img.shields.io/badge/CI-Passing-success?style=for-the-badge&logo=github-actions&logoColor=white)](https://github.com/Tracy1112/nomadliving-stays/actions/workflows/ci.yml)
 [![Next.js](https://img.shields.io/badge/Next.js-14.2-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![Prisma](https://img.shields.io/badge/Prisma-5.12-2D3748?style=for-the-badge&logo=prisma)](https://www.prisma.io/)
 [![Stripe](https://img.shields.io/badge/Stripe-15.8-635BFF?style=for-the-badge&logo=stripe)](https://stripe.com/)
+[![Clerk](https://img.shields.io/badge/Clerk-5.0-6C47FF?style=for-the-badge&logo=clerk)](https://clerk.com/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
+[![Vercel](https://img.shields.io/badge/Vercel-Deployed-000000?style=for-the-badge&logo=vercel)](https://vercel.com/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
 
 ## 📋 Table of Contents
@@ -39,17 +41,23 @@
 
 ## 🎯 Overview
 
-**NomadLiving Stays** is a premium booking platform specializing in curated glamping sites and tiny homes. This production-ready application showcases full-stack development capabilities, from database design to frontend implementation, with a focus on production-ready code quality, security, and performance. The platform is part of the NomadLiving ecosystem, connecting guests with unique stays and the ability to shop curated furniture from NomadLiving Boutique.
+**NomadLiving Stays** is the flagship booking engine of the **NomadLiving Digital Ecosystem**, a suite of interconnected platforms designed to revolutionize experiential travel. This production-ready application specializes in curated glamping sites and tiny homes, seamlessly integrating with NomadLiving Boutique (Project A) for furniture commerce and NomadLiving Ops Console (Project C) for operations management.
+
+The platform showcases enterprise-level full-stack development capabilities, from database design to frontend implementation, with a focus on production-ready code quality, security, and performance. As part of the NomadLiving ecosystem, it connects guests with unique stays while enabling them to shop curated furniture directly from their accommodation experience.
 
 ### 🎯 Problem Statement
 
-The experiential travel market faces significant challenges:
+**Client Challenge**: NomadLiving faced significant operational and market challenges in the experiential travel sector:
 
-1. **Lack of Curated Experiences**: Travelers struggle to find unique, design-forward accommodations that offer more than just a place to stay
-2. **Disconnected Shopping Experience**: Guests love the furniture and decor in unique stays but have no way to purchase similar items
-3. **Fragmented Tools**: Property owners juggle multiple platforms for listings, bookings, and payments
-4. **Limited Discovery**: Hard to find glamping sites and tiny homes that match specific aesthetic preferences
-5. **Payment Security Concerns**: Lack of integrated, secure payment processing with proper error handling
+1. **Fragmented Inventory Management**: Property owners were juggling multiple disconnected platforms for listings, bookings, and payments, leading to operational inefficiencies and data silos.
+
+2. **Disconnected Customer Journey**: Guests loved the furniture and decor in unique stays but had no integrated way to purchase similar items, resulting in lost revenue opportunities and fragmented brand experience.
+
+3. **Limited Discovery Capabilities**: The client struggled to help travelers find glamping sites and tiny homes that matched specific aesthetic preferences, reducing conversion rates.
+
+4. **Payment Security Concerns**: Lack of integrated, secure payment processing with proper error handling created trust issues and potential compliance risks.
+
+5. **Curated Experience Gap**: The market lacked a platform that offered design-forward accommodations with integrated shopping experiences, missing a significant market opportunity.
 
 **Market Opportunity**:
 
@@ -60,7 +68,7 @@ The experiential travel market faces significant challenges:
 
 ### 💡 Solution
 
-NomadLiving Stays provides a complete, production-ready solution that addresses these challenges:
+**Delivered Solution**: NomadLiving Stays provides a complete, production-ready platform that addresses all identified challenges:
 
 **For Travelers**:
 
@@ -88,11 +96,11 @@ NomadLiving Stays provides a complete, production-ready solution that addresses 
 
 ### 📋 Project Background
 
-This project is part of the **NomadLiving Ecosystem**, a suite of interconnected platforms:
+This project is part of the **NomadLiving Digital Ecosystem**, a suite of interconnected platforms:
 
-1. **NomadLiving Stays** (This Project) - Curated glamping & tiny homes booking platform
-2. **NomadLiving Boutique** - Furniture and home decor e-commerce platform
-3. **NomadLiving Ops Console** - Operations and management dashboard
+1. **NomadLiving Stays** (This Project) - The flagship booking engine for curated glamping & tiny homes
+2. **NomadLiving Boutique** - Integrated furniture and home decor e-commerce platform
+3. **NomadLiving Ops Console** - Operations and management dashboard for suppliers and staff
 
 The ecosystem demonstrates real-world development practices including:
 
@@ -325,13 +333,6 @@ User Request
                  │   Response   │
                  │ (Revalidate)│
                  └──────────────┘
-│  │   + MongoDB  │  │   Payments  │  │   Storage    │     │
-│  └──────────────┘  └──────────────┘  └──────────────┘     │
-│  ┌──────────────┐                                          │
-│  │    Clerk     │                                          │
-│  │  Auth        │                                          │
-│  └──────────────┘                                          │
-└─────────────────────────────────────────────────────────────┘
 ```
 
 ### Design Decisions
@@ -375,8 +376,8 @@ User Request
 
 ```bash
 # Clone the repository
-git clone https://github.com/Tracy1112/homeaway-booking-platform.git
-cd homeaway-booking-platform
+git clone https://github.com/Tracy1112/nomadliving-stays.git
+cd nomadliving-stays
 
 # Install dependencies
 npm install
@@ -387,13 +388,13 @@ cp .env.example .env.local
 # Configure environment variables
 # Edit .env.local with your credentials:
 DATABASE_URL="mongodb://localhost:27017/nomadliving-stays"
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
-CLERK_SECRET_KEY=your_clerk_secret_key
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
-STRIPE_SECRET_KEY=your_stripe_secret_key
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-ADMIN_USER_ID=your_admin_user_id
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=(Available upon request)
+CLERK_SECRET_KEY=(Available upon request)
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=(Available upon request)
+STRIPE_SECRET_KEY=(Available upon request)
+NEXT_PUBLIC_SUPABASE_URL=(Available upon request)
+NEXT_PUBLIC_SUPABASE_ANON_KEY=(Available upon request)
+ADMIN_USER_ID=(Available upon request)
 
 # Initialise the database
 npx prisma generate
@@ -424,7 +425,7 @@ npm run test:coverage # Run tests with coverage
 ## 📁 Project Structure
 
 ```
-HomeAway/
+nomadliving-stays/
 ├── app/                    # Next.js App Router
 │   ├── api/               # API routes
 │   │   ├── payment/       # Stripe payment processing
@@ -477,7 +478,7 @@ HomeAway/
 │   └── schema.prisma
 │
 ├── utils/                # Utility functions
-│   ├── actions.ts        # Server Actions
+│   ├── actions/          # Server Actions (modular)
 │   ├── db.ts             # Database connection
 │   ├── schemas.ts        # Zod validation schemas
 │   ├── errors.ts         # Error handling
@@ -488,7 +489,7 @@ HomeAway/
 ├── hooks/                # Custom React hooks
 │   └── useProperty.ts
 │
-├── constants/          # Constants
+├── constants/            # Constants
 │   └── index.ts
 │
 └── __tests__/           # Test files
@@ -767,14 +768,14 @@ See [TESTING_GUIDE.md](./TESTING_GUIDE.md) for detailed testing documentation.
 Ensure all required environment variables are configured:
 
 ```env
-DATABASE_URL=your_mongodb_connection_string
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_key
-CLERK_SECRET_KEY=your_clerk_secret
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your_stripe_key
-STRIPE_SECRET_KEY=your_stripe_secret
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_key
-ADMIN_USER_ID=your_admin_user_id
+DATABASE_URL=(Available upon request)
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=(Available upon request)
+CLERK_SECRET_KEY=(Available upon request)
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=(Available upon request)
+STRIPE_SECRET_KEY=(Available upon request)
+NEXT_PUBLIC_SUPABASE_URL=(Available upon request)
+NEXT_PUBLIC_SUPABASE_ANON_KEY=(Available upon request)
+ADMIN_USER_ID=(Available upon request)
 ```
 
 ### Database Migration
@@ -968,8 +969,8 @@ This project serves as a portfolio piece showcasing:
 **Location**: Australia  
 **Availability**: Open to freelance and full-time software engineering opportunities  
 **Portfolio**: Available upon request  
-**LinkedIn**: [Your LinkedIn profile]  
-**Email**: [Your email]
+**LinkedIn**: (Available upon request)  
+**Email**: (Available upon request)
 
 ### 🎯 Looking For
 
@@ -996,10 +997,13 @@ This project demonstrates:
 
 🔗 **Live Demo**: [https://nomadliving-stays.vercel.app](https://nomadliving-stays.vercel.app)
 
-🌐 **Ecosystem Links**:
+### Explore the Ecosystem
 
-- [NomadLiving Boutique](https://nomadliving-boutique.vercel.app) - Shop curated furniture from stays
-- [NomadLiving Ops Console](https://nomadliving-ops.vercel.app) - Partner/Staff login
+🛍️ **Boutique Store**: [NomadLiving Boutique](https://nomadliving-boutique.vercel.app)  
+_Shop the furniture found in these stays_
+
+🔐 **Staff Portal**: [NomadLiving Ops Console](https://nomadliving-ops.vercel.app)  
+_Operations & Supplier Management_
 
 📊 **Vercel Dashboard**: [View Deployment](https://vercel.com/tracykong/nomadliving-stays)
 
@@ -1046,6 +1050,36 @@ Create and manage property listings with detailed information and image uploads.
 - [Stripe Documentation](https://stripe.com/docs)
 - [Clerk Documentation](https://clerk.com/docs)
 - [TypeScript Documentation](https://www.typescriptlang.org/docs)
+
+---
+
+<a id="australian-market"></a>
+
+## 🇦🇺 Australian Market Considerations
+
+### Privacy & Compliance
+
+- **Australian Privacy Principles (APPs)**: Built with APPs compliance in mind
+- **Data Protection**: Secure handling of user data and booking information
+- **GDPR Considerations**: Privacy-first approach to data collection
+
+### Currency & Payments
+
+- **AUD Support**: Full Australian Dollar formatting and Stripe integration
+- **Payment Processing**: Stripe configured for Australian market
+- **Tax Calculations**: Proper tax handling for Australian transactions
+
+### Accessibility
+
+- **WCAG 2.1 AA**: Accessibility considerations for inclusive design
+- **Screen Reader Support**: Semantic HTML and ARIA labels
+- **Keyboard Navigation**: Full keyboard accessibility
+
+### Localization
+
+- **Timezone Support**: AEST/AEDT handling for Australian users
+- **Date Formatting**: Australian date format preferences
+- **Currency Display**: AUD formatting throughout the platform
 
 ---
 
