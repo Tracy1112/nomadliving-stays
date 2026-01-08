@@ -23,8 +23,8 @@ const createMockRequest = (url: string, options?: RequestInit) => {
     headers: new Headers(options?.headers),
     json: async () => {
       if (options?.body) {
-        return typeof options.body === 'string' 
-          ? JSON.parse(options.body) 
+        return typeof options.body === 'string'
+          ? JSON.parse(options.body)
           : options.body
       }
       return {}

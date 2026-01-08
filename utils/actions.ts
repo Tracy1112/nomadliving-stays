@@ -1,3 +1,20 @@
+/**
+ * Server Actions
+ * 
+ * This module contains all server actions for the application.
+ * Actions are organized by domain:
+ * - Profile management
+ * - Property management
+ * - Favorites
+ * - Reviews
+ * - Bookings
+ * - Rentals
+ * - Admin operations
+ * 
+ * @module actions
+ * @see {@link https://nextjs.org/docs/app/building-your-application/data-fetching/server-actions-and-mutations|Next.js Server Actions}
+ */
+
 'use server';
 
 import {
@@ -25,7 +42,14 @@ import {
   ensureExists,
 } from './errors';
 
-// 获取认证用户（使用新的错误类）
+/**
+ * Get the currently authenticated user
+ * 
+ * @private
+ * @throws {AuthenticationError} If user is not authenticated
+ * @throws {Redirect} Redirects to /profile/create if user doesn't have a profile
+ * @returns {Promise<User>} The authenticated Clerk user object
+ */
 const getAuthUser = async () => {
   const user = await currentUser();
   if (!user) {
@@ -37,7 +61,14 @@ const getAuthUser = async () => {
   return user;
 };
 
-// 获取管理员用户
+/**
+ * Get the admin user
+ * 
+ * @private
+ * @throws {Error} If ADMIN_USER_ID is not set
+ * @throws {Redirect} Redirects to home if user is not admin
+ * @returns {Promise<User>} The authenticated admin user
+ */
 const getAdminUser = async () => {
   const user = await getAuthUser();
   const adminUserId = process.env.ADMIN_USER_ID;
@@ -52,6 +83,18 @@ const getAdminUser = async () => {
   return user;
 };
 
+/**
+ * Create a new user profile
+ * 
+ * Creates a profile for the authenticated user with validated form data.
+ * Also updates Clerk metadata to mark the user as having a profile.
+ * 
+ * @param {any} prevState - Previous form state (unused)
+ * @param {FormData} formData - Form data containing firstName, lastName, username
+ * @returns {Promise<void>} Redirects to home page on success
+ * @throws {AuthenticationError} If user is not authenticated
+ * @throws {ConflictError} If username already exists
+ */
 export const createProfileAction = async (
   prevState: any,
   formData: FormData
@@ -93,6 +136,11 @@ export const createProfileAction = async (
   redirect('/');
 };
 
+/**
+ * Fetch the current user's profile image URL
+ * 
+ * @returns {Promise<string | null>} Profile image URL or null if not found
+ */
 export const fetchProfileImage = async () => {
   const user = await currentUser();
   if (!user) return null;
@@ -109,6 +157,12 @@ export const fetchProfileImage = async () => {
   return profile?.profileImage;
 };
 
+/**
+ * Fetch the current user's complete profile
+ * 
+ * @throws {Redirect} Redirects to /profile/create if profile doesn't exist
+ * @returns {Promise<Profile>} The user's profile
+ */
 export const fetchProfile = async () => {
   const user = await getAuthUser();
   const profile = await db.profile.findUnique({
