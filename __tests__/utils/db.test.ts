@@ -19,7 +19,14 @@ describe('Database Client', () => {
   });
 
   afterEach(() => {
-    process.env.NODE_ENV = originalEnv;
+    // NODE_ENV is read-only, use Object.defineProperty to restore
+    if (originalEnv) {
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: originalEnv,
+        writable: true,
+        configurable: true,
+      });
+    }
     (globalThis as any).prisma = originalGlobal;
   });
 

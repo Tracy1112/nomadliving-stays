@@ -105,6 +105,11 @@ describe('Supabase Image Upload', () => {
           data: null,
           error: { message: 'Upload failed' },
         }),
+        getPublicUrl: jest.fn(() => ({
+          data: {
+            publicUrl: '',
+          },
+        })),
       };
 
       mockSupabaseClient.storage.from = jest.fn(() => mockStorageBucket);

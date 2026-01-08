@@ -11,6 +11,9 @@ import {
 } from '@/utils/errors';
 import { rateLimit, getClientIP, RATE_LIMITS } from '@/utils/rate-limit';
 
+// Force dynamic rendering (this route uses request headers for rate limiting)
+export const dynamic = 'force-dynamic';
+
 // 延迟创建 Stripe 客户端，只在需要时检查环境变量
 function getStripeClient() {
   const stripeSecretKey = process.env.STRIPE_SECRET_KEY;

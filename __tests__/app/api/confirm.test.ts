@@ -1,6 +1,20 @@
 import { GET } from '@/app/api/confirm/route'
 import db from '@/utils/db'
 
+// Mock rate limiting
+jest.mock('@/utils/rate-limit', () => ({
+  rateLimit: jest.fn(() => ({
+    success: true,
+    limit: 10,
+    remaining: 9,
+    reset: Date.now() + 60000,
+  })),
+  getClientIP: jest.fn(() => '127.0.0.1'),
+  RATE_LIMITS: {
+    PAYMENT: { max: 10, window: 60 },
+  },
+}))
+
 // Mock NextRequest
 const createMockRequest = (url: string) => {
   return {
