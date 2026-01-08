@@ -27,8 +27,21 @@ class ErrorBoundary extends React.Component<
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    // 在生产环境中，这里可以发送错误到错误监控服务（如Sentry）
-    console.error('Error caught by boundary:', error, errorInfo);
+    // Log error with structured logging (includes Sentry integration if enabled)
+    if (typeof window !== 'undefined') {
+      // Dynamic import to avoid SSR issues
+      import('@/utils/logger').then(({ logger }) => {
+        logger.error('Error caught by ErrorBoundary', error, {
+          componentStack: errorInfo.componentStack,
+          errorBoundary: true,
+        });
+      }).catch(() => {
+        // Fallback to console if logger not available
+        console.error('Error caught by boundary:', error, errorInfo);
+      });
+    } else {
+      console.error('Error caught by boundary:', error, errorInfo);
+    }
   }
 
   handleReset = () => {
@@ -42,19 +55,21 @@ class ErrorBoundary extends React.Component<
       }
 
       return (
-        <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-          <h2 className="text-2xl font-bold text-destructive">
-            出现了一些问题
-          </h2>
-          <p className="text-muted-foreground">
-            {this.state.error?.message || '发生了意外错误'}
-          </p>
-          <div className="flex gap-2">
+        <div className="flex flex-col items-center justify-center min-h-[400px] gap-4 px-4">
+          <div className="text-center space-y-2">
+            <h2 className="text-2xl font-bold text-destructive">
+              Something went wrong
+            </h2>
+            <p className="text-muted-foreground max-w-md">
+              {this.state.error?.message || 'An unexpected error occurred. Our team has been notified.'}
+            </p>
+          </div>
+          <div className="flex gap-2 flex-wrap justify-center">
             <Button onClick={this.handleReset} variant="outline">
-              重试
+              Try Again
             </Button>
             <Button onClick={() => window.location.href = '/'} variant="default">
-              返回首页
+              Back to NomadLiving Stays
             </Button>
           </div>
         </div>

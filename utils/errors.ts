@@ -1,4 +1,5 @@
 import { ERROR_MESSAGES } from '@/constants'
+import { logger } from './logger'
 
 // 错误日志记录接口
 interface ErrorLog {
@@ -9,7 +10,11 @@ interface ErrorLog {
   context?: Record<string, any>
 }
 
-// 日志记录函数（生产环境可以集成Sentry等）
+/**
+ * Logs an error with structured logging and optional Sentry integration
+ * @param error - The error to log
+ * @param context - Additional context information
+ */
 const logError = (error: Error | AppError, context?: Record<string, any>) => {
   const errorLog: ErrorLog = {
     message: error.message,
@@ -19,21 +24,16 @@ const logError = (error: Error | AppError, context?: Record<string, any>) => {
     context,
   }
 
-  // 开发环境：详细日志
-  if (process.env.NODE_ENV === 'development') {
-    console.error('❌ Error Log:', errorLog)
-  } else {
-    // 生产环境：简化日志（可以发送到错误监控服务）
-    console.error(`[${errorLog.statusCode}] ${errorLog.message}`, {
-      timestamp: errorLog.timestamp,
-      ...(context && { context }),
-    })
-  }
-
-  // TODO: 生产环境可以集成Sentry
-  // if (process.env.NODE_ENV === 'production') {
-  //   Sentry.captureException(error, { extra: context })
-  // }
+  // Use structured logger (handles Sentry integration automatically)
+  logger.error(
+    `[${errorLog.statusCode}] ${errorLog.message}`,
+    error,
+    {
+      ...errorLog,
+      errorType: error instanceof AppError ? error.constructor.name : 'Error',
+      isOperational: error instanceof AppError ? error.isOperational : false,
+    }
+  )
 }
 
 // 基础错误类

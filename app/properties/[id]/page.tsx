@@ -15,6 +15,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import SubmitReview from '@/components/reviews/SubmitReview';
 import PropertyReviews from '@/components/reviews/PropertyReviews';
 import { auth } from '@clerk/nextjs/server';
+import type { Metadata } from 'next';
 const DynamicMap = dynamic(
   () => import('@/components/properties/PropertyMap'),
   {
@@ -30,6 +31,40 @@ const DynamicBookingWrapper = dynamic(
     loading: () => <Skeleton className='h-[200px] w-full' />,
   }
 );
+
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  const property = await fetchPropertyDetails(params.id);
+  
+  if (!property) {
+    return {
+      title: 'Property Not Found',
+    };
+  }
+
+  return {
+    title: `${property.name} | NomadLiving Stays`,
+    description: property.tagline || property.description.substring(0, 160),
+    openGraph: {
+      title: `${property.name} | NomadLiving Stays`,
+      description: property.tagline || property.description.substring(0, 160),
+      images: [
+        {
+          url: property.image,
+          width: 1200,
+          height: 630,
+          alt: property.name,
+        },
+      ],
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${property.name} | NomadLiving Stays`,
+      description: property.tagline || property.description.substring(0, 160),
+      images: [property.image],
+    },
+  };
+}
 
 async function PropertyDetailsPage({ params }: { params: { id: string } }) {
   const property = await fetchPropertyDetails(params.id);

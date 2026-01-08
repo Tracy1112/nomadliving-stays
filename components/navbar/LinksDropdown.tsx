@@ -40,7 +40,7 @@ function LinksDropdown() {
         </SignedOut>
         <SignedIn>
           {links.map((link) => {
-            if (link.label === 'admin' && !isAdminUser) return null;
+            if (link.label === 'staff portal' && !isAdminUser) return null;
             return (
               <DropdownMenuItem key={link.href}>
                 <Link href={link.href} className='capitalize w-full'>
@@ -49,6 +49,17 @@ function LinksDropdown() {
               </DropdownMenuItem>
             );
           })}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem asChild>
+            <Link 
+              href='https://nomadliving-boutique.vercel.app' 
+              target='_blank' 
+              rel='noopener noreferrer'
+              className='w-full'
+            >
+              Shop the Look
+            </Link>
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem>
             <SignOutLink />

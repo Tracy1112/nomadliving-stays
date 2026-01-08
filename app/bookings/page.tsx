@@ -1,6 +1,7 @@
 import EmptyList from '@/components/home/EmptyList';
 import CountryFlagAndName from '@/components/card/CountryFlagAndName';
 import Link from 'next/link';
+import type { Metadata } from 'next';
 
 import { formatDate, formatCurrency } from '@/utils/format';
 import {
@@ -19,6 +20,11 @@ import { fetchBookings } from '@/utils/actions';
 import { deleteBookingAction } from '@/utils/actions';
 import LoadingTable from '@/components/booking/LoadingTable';
 
+export const metadata: Metadata = {
+  title: 'My Trips',
+  description: 'View and manage your upcoming and past stays at NomadLiving Stays.',
+};
+
 async function BookingsPage() {
   const bookings = await fetchBookings();
   if (bookings.length === 0) {
@@ -26,9 +32,9 @@ async function BookingsPage() {
   }
   return (
     <div className='mt-16'>
-      <h4 className='mb-4 capitalize'>total bookings : {bookings.length}</h4>
+      <h4 className='mb-4 capitalize'>My Trips : {bookings.length}</h4>
       <Table>
-        <TableCaption>A list of your recent bookings.</TableCaption>
+        <TableCaption>A list of your recent trips.</TableCaption>
         <TableHeader>
           <TableRow>
             <TableHead>Property Name</TableHead>

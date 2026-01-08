@@ -9,11 +9,18 @@ import CountriesInput from '@/components/form/CountriesInput';
 import ImageInput from '@/components/form/ImageInput';
 import CounterInput from '@/components/form/CounterInput';
 import AmenitiesInput from '@/components/form/AmenitiesInput';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'List Your Property',
+  description: 'List your glamping site or tiny home on NomadLiving Stays and share your unique space with travelers.',
+};
+
 function CreatePropertyPage() {
   return (
     <section>
       <h1 className='text-2xl font-semibold mb-8 capitalize'>
-        create property
+        List Your Property
       </h1>
       <div className='border p-8 rounded'>
         <h3 className='text-lg mb-4 font-medium'>General Info</h3>
@@ -54,7 +61,7 @@ function CreatePropertyPage() {
           <CounterInput detail='baths' />
           <h3 className='text-lg mt-10 mb-6 font-medium'>Amenities</h3>
           <AmenitiesInput />
-          <SubmitButton text='create rental' className='mt-12' />
+          <SubmitButton text='List Your Property' className='mt-12' />
         </FormContainer>
       </div>
     </section>

@@ -1,0 +1,34 @@
+/**
+ * Sentry Edge Configuration
+ *
+ * This file configures Sentry for Edge runtime (middleware, edge functions).
+ *
+ * @see https://docs.sentry.io/platforms/javascript/guides/nextjs/
+ */
+
+// Conditional import - only load if Sentry is installed
+let Sentry: any;
+try {
+  Sentry = require('@sentry/nextjs');
+} catch {
+  // Sentry not installed, create a no-op implementation
+  Sentry = {
+    init: () => {},
+  };
+}
+
+const SENTRY_DSN = process.env.NEXT_PUBLIC_SENTRY_DSN;
+
+Sentry.init({
+  dsn: SENTRY_DSN,
+  
+  // Adjust this value in production
+  tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
+  
+  // Environment
+  environment: process.env.NODE_ENV || 'development',
+  
+  // Release tracking
+  release: process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA || undefined,
+});
+

@@ -1,10 +1,10 @@
 import { formatDate, formatCurrency, formatQuantity } from '@/utils/format'
 
 describe('formatDate', () => {
-  it('should format date with day and month', () => {
+  it('should format date with day and month (Australian format)', () => {
     const date = new Date('2024-01-15')
     const result = formatDate(date)
-    expect(result).toBe('January 15, 2024')
+    expect(result).toBe('15 January 2024') // Australian format: DD Month YYYY
   })
 
   it('should format date with only month when onlyMonth is true', () => {
@@ -16,24 +16,24 @@ describe('formatDate', () => {
   it('should handle different months correctly', () => {
     const date = new Date('2024-12-25')
     const result = formatDate(date)
-    expect(result).toBe('December 25, 2024')
+    expect(result).toBe('25 December 2024') // Australian format
   })
 
   it('should handle leap year correctly', () => {
     const date = new Date('2024-02-29')
     const result = formatDate(date)
-    expect(result).toBe('February 29, 2024')
+    expect(result).toBe('29 February 2024') // Australian format
   })
 })
 
 describe('formatCurrency', () => {
-  it('should format positive numbers as currency', () => {
-    expect(formatCurrency(100)).toBe('$100')
+  it('should format positive numbers as AUD currency', () => {
+    expect(formatCurrency(100)).toBe('$100') // Australian Dollar format (en-AU uses $)
     expect(formatCurrency(1000)).toBe('$1,000')
     expect(formatCurrency(1234.56)).toBe('$1,235') // Rounds to nearest dollar
   })
 
-  it('should format zero as currency', () => {
+  it('should format zero as AUD currency', () => {
     expect(formatCurrency(0)).toBe('$0')
   })
 

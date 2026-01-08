@@ -34,6 +34,35 @@ const nextConfig = {
   swcMinify: true,
   // 优化字体加载
   optimizeFonts: true,
+  // Enable instrumentation hook (for Sentry and other monitoring tools)
+  experimental: {
+    instrumentationHook: true,
+  },
 }
 
-export default nextConfig
+// Wrap with Sentry if available (optional - only if @sentry/nextjs is installed)
+let config = nextConfig
+
+// Try to wrap with Sentry (will fail gracefully if not installed)
+// Only attempt if DSN is provided to avoid unnecessary require
+if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
+  try {
+    const { withSentryConfig } = require('@sentry/nextjs')
+    config = withSentryConfig(nextConfig, {
+      // Sentry configuration options
+      silent: true, // Suppress source map uploading logs during build
+      org: process.env.SENTRY_ORG,
+      project: process.env.SENTRY_PROJECT,
+    })
+  } catch (e) {
+    // Sentry not installed, use default config
+    // Only log in development to avoid build noise
+    if (process.env.NODE_ENV === 'development') {
+      console.log(
+        'Sentry not configured. Install @sentry/nextjs to enable error tracking.'
+      )
+    }
+  }
+}
+
+export default config

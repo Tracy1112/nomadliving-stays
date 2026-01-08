@@ -1,14 +1,15 @@
 import Link from 'next/link';
 import { LuTent } from 'react-icons/lu';
-import { Button } from '../ui/button';
 
 function Logo() {
   return (
-    <Button size='icon' asChild>
-      <Link href='/'>
-        <LuTent className='w-6 h-6' />
-      </Link>
-    </Button>
+    <Link href='/' className='flex items-center gap-2 group'>
+      <LuTent className='w-6 h-6 text-primary group-hover:scale-110 transition-transform' />
+      <span className='text-xl font-bold tracking-tight'>
+        <span className='text-primary'>NOMAD</span>
+        <span className='text-muted-foreground'> | STAYS</span>
+      </span>
+    </Link>
   );
 }
 export default Logo;

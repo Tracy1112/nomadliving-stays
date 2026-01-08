@@ -5,6 +5,12 @@ import {
 } from '@/components/admin/Loading';
 import StatsContainer from '@/components/admin/StatsContainer';
 import { Suspense } from 'react';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Staff Portal',
+  description: 'Staff portal for managing NomadLiving Stays platform.',
+};
 
 function AdminPage() {
   return (

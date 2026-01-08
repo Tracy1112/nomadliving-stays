@@ -111,7 +111,7 @@ export const POST = async (req: NextRequest) => {
           {
             quantity: 1,
             price_data: {
-              currency: 'usd',
+              currency: 'aud', // Australian Dollar for Australian market
               product_data: {
                 name: `${name}`,
                 images: [image],

@@ -17,9 +17,9 @@ async function PropertiesContainer({
   if (properties.length === 0) {
     return (
       <EmptyList
-        heading='No results.'
-        message='Try changing or removing some of your filters.'
-        btnText='Clear Filters'
+        heading='Our curators are finding more unique stays for you.'
+        message='Check back soon for new handpicked glamping sites and tiny homes.'
+        btnText='Explore All Stays'
       />
     );
   }

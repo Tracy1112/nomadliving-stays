@@ -1,6 +1,7 @@
 import EmptyList from '@/components/home/EmptyList';
 import { fetchRentals, deleteRentalAction } from '@/utils/actions';
 import Link from 'next/link';
+import type { Metadata } from 'next';
 
 import { formatCurrency } from '@/utils/format';
 import {
@@ -16,14 +17,19 @@ import {
 import FormContainer from '@/components/form/FormContainer';
 import { IconButton } from '@/components/form/Buttons';
 
+export const metadata: Metadata = {
+  title: 'My Properties',
+  description: 'Manage your glamping sites and tiny homes listed on NomadLiving Stays.',
+};
+
 async function RentalsPage() {
   const rentals = await fetchRentals();
 
   if (rentals.length === 0) {
     return (
       <EmptyList
-        heading='No rentals to display.'
-        message="Don't hesitate to create a rental."
+        heading='No properties to display.'
+        message="Don't hesitate to list your property."
       />
     );
   }

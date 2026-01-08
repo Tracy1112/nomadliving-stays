@@ -116,8 +116,9 @@ export type CategoryLabel =
   | 'tent'
   | 'caravan'
   | 'cottage'
-  | 'warehouse'
+  | 'barn'
   | 'airstream'
+  | 'treehouse'
 
 export type Amenity =
   | 'wifi'

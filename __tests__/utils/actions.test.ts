@@ -512,7 +512,6 @@ describe('Review Actions', () => {
     it('should create review successfully', async () => {
       const { createReviewAction } = require('@/utils/actions')
       ;(currentUser as jest.Mock).mockResolvedValue(mockUser)
-
       ;(db.property.findUnique as jest.Mock).mockResolvedValue({
         id: 'prop_123',
       })
@@ -531,7 +530,6 @@ describe('Review Actions', () => {
     it('should prevent duplicate reviews', async () => {
       const { createReviewAction } = require('@/utils/actions')
       ;(currentUser as jest.Mock).mockResolvedValue(mockUser)
-
       ;(db.property.findUnique as jest.Mock).mockResolvedValue({
         id: 'prop_123',
       })
@@ -549,7 +547,6 @@ describe('Review Actions', () => {
     it('should handle property not found', async () => {
       const { createReviewAction } = require('@/utils/actions')
       ;(currentUser as jest.Mock).mockResolvedValue(mockUser)
-
       ;(db.property.findUnique as jest.Mock).mockResolvedValue(null)
 
       const result = await createReviewAction({}, mockFormData)
@@ -607,7 +604,6 @@ describe('Favorite Actions', () => {
       const { toggleFavoriteAction } = require('@/utils/actions')
       const { revalidatePath } = require('next/cache')
       ;(currentUser as jest.Mock).mockResolvedValue(mockUser)
-
       ;(db.property.findUnique as jest.Mock).mockResolvedValue({
         id: 'prop_123',
       })
@@ -631,7 +627,6 @@ describe('Favorite Actions', () => {
       const { toggleFavoriteAction } = require('@/utils/actions')
       const { revalidatePath } = require('next/cache')
       ;(currentUser as jest.Mock).mockResolvedValue(mockUser)
-
       ;(db.property.findUnique as jest.Mock).mockResolvedValue({
         id: 'prop_123',
       })
@@ -977,7 +972,6 @@ describe('Property Management Actions', () => {
       mockFormData.append('guests', '4')
       mockFormData.append('amenities', 'WiFi, Parking, Pool')
       mockFormData.append('image', mockFile)
-
       ;(uploadImage as jest.Mock).mockResolvedValue(
         'https://example.com/image.jpg'
       )

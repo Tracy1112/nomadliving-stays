@@ -30,7 +30,7 @@ function NavSearch() {
   return (
     <Input
       type='text'
-      placeholder='find a property...'
+      placeholder='Find your wilderness escape...'
       className='max-w-xs dark:bg-muted'
       onChange={(e) => {
         setSearch(e.target.value);

@@ -4,6 +4,13 @@ import FormInput from '@/components/form/FormInput';
 import { createProfileAction } from '@/utils/actions';
 import { currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Create Profile',
+  description: 'Create your NomadLiving Stays profile to start booking unique glamping and tiny home experiences.',
+};
+
 async function CreateProfilePage() {
   const user = await currentUser();
 

@@ -1,0 +1,64 @@
+/**
+ * Sentry Server Configuration
+ *
+ * This file configures Sentry for the server-side of the Next.js application.
+ * It is loaded by the Sentry SDK when running on the server.
+ *
+ * @see https://docs.sentry.io/platforms/javascript/guides/nextjs/
+ */
+
+// Conditional import - only load if Sentry is installed
+let Sentry: any;
+try {
+  Sentry = require('@sentry/nextjs');
+} catch {
+  // Sentry not installed, create a no-op implementation
+  Sentry = {
+    init: () => {},
+    addBreadcrumb: () => {},
+    captureException: () => {},
+  };
+}
+
+const SENTRY_DSN = process.env.NEXT_PUBLIC_SENTRY_DSN;
+
+Sentry.init({
+  dsn: SENTRY_DSN,
+  
+  // Adjust this value in production, or use tracesSampler for greater control
+  tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
+  
+  // Setting this option to true will print useful information to the console while you're setting up Sentry.
+  debug: process.env.NODE_ENV === 'development',
+  
+  // Environment
+  environment: process.env.NODE_ENV || 'development',
+  
+  // Release tracking
+  release: process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA || undefined,
+  
+  // Filter out known non-critical errors
+  beforeSend(event, hint) {
+    // Don't send errors in development
+    if (process.env.NODE_ENV === 'development') {
+      return null;
+    }
+    
+    // Filter out validation errors (these are expected and handled)
+    const error = hint.originalException;
+    if (error && typeof error === 'object' && 'message' in error) {
+      const message = String(error.message);
+      if (
+        message.includes('ValidationError') ||
+        message.includes('AuthenticationError') ||
+        message.includes('NotFoundError')
+      ) {
+        // These are operational errors, log but don't send to Sentry
+        return null;
+      }
+    }
+    
+    return event;
+  },
+});
+

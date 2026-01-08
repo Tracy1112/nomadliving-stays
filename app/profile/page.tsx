@@ -7,12 +7,19 @@ import {
 import FormInput from '@/components/form/FormInput';
 import { SubmitButton } from '@/components/form/Buttons';
 import ImageInputContainer from '@/components/form/ImageInputContainer';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Account',
+  description: 'Manage your NomadLiving Stays account settings.',
+};
+
 async function ProfilePage() {
   const profile = await fetchProfile();
 
   return (
     <section>
-      <h1 className='text-2xl font-semibold mb-8 capitalize'>user profile</h1>
+      <h1 className='text-2xl font-semibold mb-8 capitalize'>Account</h1>
       <div className='border p-8 rounded-md '>
         <ImageInputContainer
           image={profile.profileImage}

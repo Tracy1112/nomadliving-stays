@@ -2,6 +2,7 @@ import { fetchReservations } from '@/utils/actions';
 import Link from 'next/link';
 import EmptyList from '@/components/home/EmptyList';
 import CountryFlagAndName from '@/components/card/CountryFlagAndName';
+import type { Metadata } from 'next';
 
 import { formatDate, formatCurrency } from '@/utils/format';
 import {
@@ -14,6 +15,12 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import Stats from '@/components/reservations/Stats';
+
+export const metadata: Metadata = {
+  title: 'Host Reservations',
+  description: 'Manage reservations for your properties on NomadLiving Stays.',
+};
+
 async function ReservationsPage() {
   const reservations = await fetchReservations();
   if (reservations.length === 0) return <EmptyList />;
@@ -23,10 +30,10 @@ async function ReservationsPage() {
       <Stats />
       <div className='mt-16'>
         <h4 className='mb-4 capitalize'>
-          total reservations : {reservations.length}
+          Host Reservations : {reservations.length}
         </h4>
         <Table>
-          <TableCaption>A list of recent reservations</TableCaption>
+          <TableCaption>A list of recent host reservations</TableCaption>
           <TableHeader>
             <TableRow>
               <TableHead>Property Name</TableHead>
