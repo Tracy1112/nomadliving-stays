@@ -38,7 +38,7 @@ describe('NavSearch', () => {
 
     const input = screen.getByTestId('search-input')
     expect(input).toBeInTheDocument()
-    expect(input).toHaveAttribute('placeholder', 'find a property...')
+    expect(input).toHaveAttribute('placeholder', 'Find your wilderness escape...')
   })
 
   it('should initialize with empty value when no search params', () => {

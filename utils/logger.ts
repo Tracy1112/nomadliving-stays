@@ -20,8 +20,14 @@ interface LogContext {
  * Structured logger class for consistent logging across the application
  */
 class Logger {
-  private isDevelopment = process.env.NODE_ENV === 'development';
-  private sentryEnabled = process.env.NEXT_PUBLIC_SENTRY_DSN && process.env.NODE_ENV === 'production';
+  // Check environment on each call to support test environment changes
+  private get isDevelopment(): boolean {
+    return process.env.NODE_ENV === 'development';
+  }
+  
+  private get sentryEnabled(): boolean {
+    return !!(process.env.NEXT_PUBLIC_SENTRY_DSN && process.env.NODE_ENV === 'production');
+  }
 
   /**
    * Logs a debug message (only in development)
